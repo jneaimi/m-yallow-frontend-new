@@ -209,6 +209,7 @@ A special `AuthStateAnnouncer` component has been added to announce authenticati
 export function AuthStateAnnouncer() {
   const { isLoaded, isSignedIn } = useAuth();
   const [prevSignedIn, setPrevSignedIn] = useState<boolean | null>(null);
+  const [announcement, setAnnouncement] = useState<string>("");
 
   useEffect(() => {
     // Announce changes to authentication state
@@ -217,10 +218,7 @@ export function AuthStateAnnouncer() {
         ? "You have successfully signed in"
         : "You have been signed out";
 
-      const announcer = document.getElementById("auth-state-announcer");
-      if (announcer) {
-        announcer.textContent = message;
-      }
+      setAnnouncement(message);
     }
 
     if (isLoaded) {
@@ -232,9 +230,10 @@ export function AuthStateAnnouncer() {
     <LiveRegion
       id="auth-state-announcer"
       politeness="polite"
-      className="sr-only"
-      aria-atomic="true"
-    />
+      aria-atomic={true}
+    >
+      {announcement}
+    </LiveRegion>
   );
 }
 ```

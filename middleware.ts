@@ -11,11 +11,6 @@ const publicRoutes = [
   "/theme-demo(.*)",
 ];
 
-// Routes to be ignored by the middleware completely
-const ignoredRoutes = [
-  "/api/webhooks(.*)", // Clerk webhook routes should be ignored
-];
-
 export default clerkMiddleware(async (auth, req) => {
   // Protect all routes except the public ones
   if (
