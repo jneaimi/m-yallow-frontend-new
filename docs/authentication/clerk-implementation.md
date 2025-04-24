@@ -20,8 +20,9 @@ The ClerkProvider has been added to the root layout (`app/layout.tsx`) to wrap t
 <ClerkProvider
   appearance={{
     elements: {
-      formButtonPrimary: 'bg-primary hover:bg-primary/90 text-primary-foreground',
-      card: 'bg-background border border-border shadow-md',
+      formButtonPrimary:
+        "bg-primary hover:bg-primary/90 text-primary-foreground",
+      card: "bg-background border border-border shadow-md",
       // Additional styling configuration
     },
   }}
@@ -37,8 +38,8 @@ The appearance configuration applies our application's design system to Clerk's 
 The following environment variables are required for Clerk authentication:
 
 ```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<your-publishable-key>
+CLERK_SECRET_KEY=<your-secret-key>
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
@@ -61,15 +62,15 @@ Server-side authentication utilities are located in `lib/auth/server.ts` and inc
 Example usage in a server component:
 
 ```tsx
-import { getUserData } from '@/lib/auth';
+import { getUserData } from "@/lib/auth";
 
 export default async function ProfilePage() {
   const userData = await getUserData();
-  
+
   if (!userData) {
     return <div>Please sign in to view your profile</div>;
   }
-  
+
   return (
     <div>
       <h1>Welcome, {userData.firstName}</h1>
@@ -91,21 +92,21 @@ Client-side authentication utilities are located in `lib/auth/client.ts` and inc
 Example usage in a client component:
 
 ```tsx
-'use client';
+"use client";
 
-import { useUserData } from '@/lib/auth/client';
+import { useUserData } from "@/lib/auth/client";
 
 export function UserProfile() {
   const { user, isLoading } = useUserData();
-  
+
   if (isLoading) {
     return <div>Loading profile...</div>;
   }
-  
+
   if (!user) {
     return <div>Please sign in to view your profile</div>;
   }
-  
+
   return (
     <div>
       <h1>Welcome, {user.firstName}</h1>
@@ -120,10 +121,12 @@ export function UserProfile() {
 Authentication flows have been enhanced with accessibility features:
 
 1. **Screen Reader Announcements**:
+
    - Authentication state changes are announced using live regions
    - Form errors and successes are announced to screen readers
 
 2. **Keyboard Navigation**:
+
    - Authentication forms support keyboard navigation
    - Focus management during authentication flows
 
@@ -145,57 +148,52 @@ Authentication-specific accessibility utilities are located in `lib/accessibilit
 Example usage in an authentication form component:
 
 ```tsx
-'use client';
+"use client";
 
-import { 
-  getAuthFormProps, 
-  getAuthErrorProps, 
-  manageFocusAfterAuthAction 
-} from '@/lib/accessibility/auth';
+import {
+  getAuthFormProps,
+  getAuthErrorProps,
+  manageFocusAfterAuthAction,
+} from "@/lib/accessibility/auth";
 
 export function SignInForm() {
-  const formId = 'sign-in-form';
-  const emailInputId = 'sign-in-email';
-  
+  const formId = "sign-in-form";
+  const emailInputId = "sign-in-email";
+
   // Form state and submission logic
-  
+
   // Handle successful sign-in
   const handleSuccess = () => {
     // Other success handling
-    
+
     // Announce success to screen readers
-    announceAuthStateChange('Sign in successful');
-    
+    announceAuthStateChange("Sign in successful");
+
     // Manage focus after sign in
-    manageFocusAfterAuthAction('dashboard-heading', 'main h1');
+    manageFocusAfterAuthAction("dashboard-heading", "main h1");
   };
-  
+
   return (
-    <form 
-      {...getAuthFormProps(formId)}
-      onSubmit={handleSubmit}
-    >
+    <form {...getAuthFormProps(formId)} onSubmit={handleSubmit}>
       <h2 id={`${formId}-heading`}>Sign In</h2>
       <p id={`${formId}-description`}>Sign in to access your account</p>
-      
+
       <div>
         <label htmlFor={emailInputId}>Email</label>
-        <input 
+        <input
           id={emailInputId}
           type="email"
           aria-required="true"
-          aria-invalid={errors.email ? 'true' : 'false'}
+          aria-invalid={errors.email ? "true" : "false"}
           aria-describedby={errors.email ? `${emailInputId}-error` : undefined}
         />
         {errors.email && (
-          <div {...getAuthErrorProps(emailInputId)}>
-            {errors.email.message}
-          </div>
+          <div {...getAuthErrorProps(emailInputId)}>{errors.email.message}</div>
         )}
       </div>
-      
+
       {/* Additional form fields */}
-      
+
       <button type="submit">Sign In</button>
     </form>
   );
@@ -211,25 +209,25 @@ A special `AuthStateAnnouncer` component has been added to announce authenticati
 export function AuthStateAnnouncer() {
   const { isLoaded, isSignedIn } = useAuth();
   const [prevSignedIn, setPrevSignedIn] = useState<boolean | null>(null);
-  
+
   useEffect(() => {
     // Announce changes to authentication state
     if (isLoaded && prevSignedIn !== null && prevSignedIn !== isSignedIn) {
-      const message = isSignedIn 
-        ? 'You have successfully signed in'
-        : 'You have been signed out';
-        
-      const announcer = document.getElementById('auth-state-announcer');
+      const message = isSignedIn
+        ? "You have successfully signed in"
+        : "You have been signed out";
+
+      const announcer = document.getElementById("auth-state-announcer");
       if (announcer) {
         announcer.textContent = message;
       }
     }
-    
+
     if (isLoaded) {
       setPrevSignedIn(isSignedIn);
     }
   }, [isLoaded, isSignedIn, prevSignedIn]);
-  
+
   return (
     <LiveRegion
       id="auth-state-announcer"
@@ -243,6 +241,57 @@ export function AuthStateAnnouncer() {
 
 This component has been added to the root layout to ensure authentication state changes are announced to screen readers.
 
+## Middleware Implementation
+
+Next.js middleware has been configured to protect routes in the application. The middleware uses `clerkMiddleware` from `@clerk/nextjs/server` to handle authentication:
+
+```typescript
+import { clerkMiddleware } from "@clerk/nextjs/server";
+
+// Define routes that don't require authentication
+const publicRoutes = [
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/webhooks(.*)",
+  "/accessibility-test(.*)",
+  "/responsive-demo(.*)",
+  "/theme-demo(.*)",
+];
+
+// Routes to be ignored by the middleware completely
+const ignoredRoutes = [
+  "/api/webhooks(.*)", // Clerk webhook routes should be ignored
+];
+
+export default clerkMiddleware(async (auth, req) => {
+  // Protect all routes except the public ones
+  if (
+    !publicRoutes.some((pattern) => {
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(req.nextUrl.pathname);
+    })
+  ) {
+    await auth.protect();
+  }
+});
+
+export const config = {
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+};
+```
+
+This middleware configuration:
+
+1. Defines public routes that don't require authentication
+2. Specifies routes to be ignored by the middleware completely
+3. Uses `clerkMiddleware` with a callback function that:
+   - Checks if the current route matches any public route pattern
+   - If not, protects the route using `auth.protect()`
+4. Configures the matcher to apply middleware to all relevant routes
+
+With this setup, routes like the homepage, sign-in, and sign-up pages are publicly accessible, while all other routes require authentication.
+
 ## Implementation Checklist
 
 - [x] Configure environment variables for Clerk authentication
@@ -251,15 +300,18 @@ This component has been added to the root layout to ensure authentication state 
 - [x] Create client-side authentication utility functions
 - [x] Implement accessibility enhancements for authentication flows
 - [x] Add AuthStateAnnouncer component for screen reader announcements
+- [x] Configure middleware for route protection
 
 ## Next Steps
 
 1. **Create Authentication Pages**:
+
    - Create sign-in page
    - Create sign-up page
    - Create password reset page
 
 2. **Implement Protected Routes**:
+
    - Set up middleware for route protection
    - Create user profile page
    - Create account settings page
