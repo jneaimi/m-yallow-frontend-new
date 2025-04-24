@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Menu, X, ChevronDown, User } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   NavigationMenu,
@@ -14,11 +15,12 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  SignInButton,
+  SignUpButton,
+  SignOutButton,
+  UserProfileButton
+} from "@/components/auth";
+import { AuthStateAnnouncer } from "@/components/auth/auth-state-announcer";
 import { cn } from "@/lib/utils";
 import { useDeviceCategory } from "@/hooks/use-breakpoint";
 import {
@@ -88,7 +90,7 @@ const navItems: NavItem[] = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Placeholder for auth state
+  const { isSignedIn, isLoaded } = useAuth();
   const { isMobile } = useDeviceCategory();
 
   // Toggle mobile menu
@@ -96,13 +98,10 @@ export function Header() {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  // For demonstration purposes
-  const toggleAuth = () => {
-    setIsLoggedIn(!isLoggedIn);
-  };
-
   return (
     <header className="sticky top-0 z-[100] w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      {/* Accessibility: Screen reader announcer for auth state changes */}
+      <AuthStateAnnouncer />
       <ResponsiveContainer className="overflow-visible">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -164,40 +163,25 @@ export function Header() {
           </HideOnMobile>
 
           {/* User Controls and Theme Toggle */}
-          <ResponsiveStack direction="horizontal" spacing="2" align="center">
-            {/* Auth Controls */}
-            {isLoggedIn ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      "rounded-full h-8 w-8 bg-muted",
-                      isMobile && "touch-target",
-                    )}
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="sr-only">User menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuItem onClick={toggleAuth}>
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          <ResponsiveStack direction="horizontal" spacing="2" align="center" className="transition-all duration-200 ease-in-out">
+            {/* Auth Controls with loading state handling */}
+            {!isLoaded ? (
+              <HideOnMobile>
+                <div className="h-8 w-16 animate-pulse rounded bg-muted"></div>
+              </HideOnMobile>
+            ) : isSignedIn ? (
+              <UserProfileButton 
+                displayMode="dropdown" 
+                variant="ghost" 
+                className={cn(isMobile && "touch-target")}
+                profileUrl="/profile"
+                settingsUrl="/settings"
+              />
             ) : (
               <HideOnMobile>
                 <ResponsiveStack direction="horizontal" spacing="2">
-                  <Button variant="ghost" size="sm" onClick={toggleAuth}>
-                    Login
-                  </Button>
-                  <Button variant="default" size="sm" onClick={toggleAuth}>
-                    Sign Up
-                  </Button>
+                  <SignInButton variant="ghost" size="sm" showIcon={false} />
+                  <SignUpButton variant="default" size="sm" showIcon={false} />
                 </ResponsiveStack>
               </HideOnMobile>
             )}
@@ -264,26 +248,53 @@ export function Header() {
                 )}
               </div>
             ))}
-            {!isLoggedIn && (
+            {/* Auth Mobile Controls */}
+            {isLoaded && (
               <div className="pt-4 mt-4 border-t">
-                <ResponsiveStack direction="horizontal" spacing="2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleAuth}
-                    className="w-full touch-target"
-                  >
-                    Login
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={toggleAuth}
-                    className="w-full touch-target"
-                  >
-                    Sign Up
-                  </Button>
-                </ResponsiveStack>
+                {isSignedIn ? (
+                  <div className="space-y-3">
+                    <p className="font-medium">Account</p>
+                    <div className="pl-4 space-y-2 border-l border-border">
+                      <Link
+                        href="/profile"
+                        className="block text-sm text-muted-foreground hover:text-foreground touch-target py-2"
+                        onClick={toggleMobileMenu}
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        href="/settings"
+                        className="block text-sm text-muted-foreground hover:text-foreground touch-target py-2"
+                        onClick={toggleMobileMenu}
+                      >
+                        Settings
+                      </Link>
+                      <div className="py-2">
+                        <SignOutButton 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full touch-target" 
+                          showIcon={true}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <ResponsiveStack direction="horizontal" spacing="2">
+                    <SignInButton
+                      variant="outline"
+                      size="sm"
+                      className="w-full touch-target"
+                      showIcon={true}
+                    />
+                    <SignUpButton
+                      variant="default"
+                      size="sm"
+                      className="w-full touch-target"
+                      showIcon={true}
+                    />
+                  </ResponsiveStack>
+                )}
               </div>
             )}
           </div>
