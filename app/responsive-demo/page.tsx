@@ -323,7 +323,7 @@ export default function ResponsiveDemoPage() {
                         This is only visible on small mobile devices
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Using Show component with until=&quot;sm&quot
+                        Using Show component with until=&quot;sm&quot;
                       </p>
                     </div>
                   </Show>
