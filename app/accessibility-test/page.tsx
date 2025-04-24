@@ -4,20 +4,15 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Accordion,
   AccordionContent,
@@ -34,21 +29,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { 
-  auditThemeContrast, 
-  createContrastDiagnostic 
+import {
+  auditThemeContrast,
+  createContrastDiagnostic,
 } from "@/lib/accessibility/color-contrast";
 import { announce } from "@/lib/accessibility/screen-reader";
 
 /**
  * Accessibility Test Page
- * 
+ *
  * This page provides a testing ground for all accessibility features
  * implemented in the project. It allows testing various components
  * for keyboard navigation, screen reader compatibility, and color contrast.
  */
 export default function AccessibilityTestPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [diagnosticDialogOpen, setDiagnosticDialogOpen] = useState(false);
+  const [diagnosticContent, setDiagnosticContent] = useState("");
   const [formValues, setFormValues] = useState({
     name: "",
     email: "",
@@ -61,19 +58,19 @@ export default function AccessibilityTestPage() {
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form
     const errors = {
       name: formValues.name ? "" : "Name is required",
-      email: formValues.email 
-        ? !formValues.email.includes('@') 
-          ? "Please enter a valid email address" 
-          : "" 
+      email: formValues.email
+        ? !formValues.email.includes("@")
+          ? "Please enter a valid email address"
+          : ""
         : "Email is required",
     };
-    
+
     setFormErrors(errors);
-    
+
     // If no errors, submit form
     if (!errors.name && !errors.email) {
       toast.success("Form submitted successfully");
@@ -84,34 +81,34 @@ export default function AccessibilityTestPage() {
       announce(errorMessage, "assertive");
     }
   };
-  
+
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormValues(prev => ({ ...prev, [name]: value }));
-    
+    setFormValues((prev) => ({ ...prev, [name]: value }));
+
     // Clear error when user starts typing
     if (formErrors[name as keyof typeof formErrors]) {
-      setFormErrors(prev => ({ ...prev, [name]: "" }));
+      setFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
-  
+
   // Run color contrast audit
   const runContrastAudit = () => {
     const report = auditThemeContrast();
     const diagnosticOutput = createContrastDiagnostic();
-    
+
     // Log to console for debugging
     console.log("Color Contrast Audit:", report);
-    
+
     // Show the report via toast
     toast.info("Color contrast audit completed. See console for details.");
-    
+
     toast.message("Color contrast audit", {
       description: diagnosticOutput,
       duration: 10000,
     });
-    
+
     // Display the formatted diagnostic output
     toast.message("Contrast Diagnostic", {
       description: "Detailed contrast ratio analysis",
@@ -119,31 +116,10 @@ export default function AccessibilityTestPage() {
         label: "View Report",
         onClick: () => {
           // Create a dialog to show the detailed diagnostics
-          const dialog = document.createElement('dialog');
-          dialog.className = 'p-6 max-w-3xl rounded-lg shadow-lg';
-          
-          // Create the content
-          const content = document.createElement('div');
-          content.innerHTML = `
-            <h2 class="text-xl font-bold mb-4">Color Contrast Diagnostic Report</h2>
-            <pre class="whitespace-pre-wrap text-sm bg-muted p-4 rounded overflow-auto max-h-96">${diagnosticOutput}</pre>
-            <div class="mt-4 flex justify-end">
-              <button class="px-4 py-2 bg-primary text-primary-foreground rounded">Close</button>
-            </div>
-          `;
-          
-          // Add close button functionality
-          const closeButton = content.querySelector('button');
-          closeButton?.addEventListener('click', () => {
-            dialog.close();
-            document.body.removeChild(dialog);
-          });
-          
-          dialog.appendChild(content);
-          document.body.appendChild(dialog);
-          dialog.showModal();
-        }
-      }
+          setDiagnosticContent(diagnosticOutput);
+          setDiagnosticDialogOpen(true);
+        },
+      },
     });
   };
 
@@ -161,7 +137,7 @@ export default function AccessibilityTestPage() {
         <h2 id="keyboard-heading" className="text-2xl font-semibold">
           Keyboard Navigation Testing
         </h2>
-        
+
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -181,9 +157,13 @@ export default function AccessibilityTestPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button variant="default" size="sm">Small Button</Button>
+                <Button variant="default" size="sm">
+                  Small Button
+                </Button>
                 <Button variant="default">Default Size</Button>
-                <Button variant="default" size="lg">Large Button</Button>
+                <Button variant="default" size="lg">
+                  Large Button
+                </Button>
                 <Button variant="default" size="icon" aria-label="Icon Button">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -216,7 +196,10 @@ export default function AccessibilityTestPage() {
                 <div className="space-y-2">
                   <Label htmlFor="name">
                     Name
-                    <span aria-hidden="true" className="text-destructive"> *</span>
+                    <span aria-hidden="true" className="text-destructive">
+                      {" "}
+                      *
+                    </span>
                     <span className="sr-only"> required</span>
                   </Label>
                   <Input
@@ -226,7 +209,9 @@ export default function AccessibilityTestPage() {
                     onChange={handleInputChange}
                     aria-required="true"
                     aria-invalid={!!formErrors.name}
-                    aria-describedby={formErrors.name ? "name-error" : undefined}
+                    aria-describedby={
+                      formErrors.name ? "name-error" : undefined
+                    }
                   />
                   {formErrors.name && (
                     <p id="name-error" className="text-sm text-destructive">
@@ -238,7 +223,10 @@ export default function AccessibilityTestPage() {
                 <div className="space-y-2">
                   <Label htmlFor="email">
                     Email
-                    <span aria-hidden="true" className="text-destructive"> *</span>
+                    <span aria-hidden="true" className="text-destructive">
+                      {" "}
+                      *
+                    </span>
                     <span className="sr-only"> required</span>
                   </Label>
                   <Input
@@ -249,7 +237,9 @@ export default function AccessibilityTestPage() {
                     onChange={handleInputChange}
                     aria-required="true"
                     aria-invalid={!!formErrors.email}
-                    aria-describedby={formErrors.email ? "email-error" : undefined}
+                    aria-describedby={
+                      formErrors.email ? "email-error" : undefined
+                    }
                   />
                   {formErrors.email && (
                     <p id="email-error" className="text-sm text-destructive">
@@ -288,20 +278,20 @@ export default function AccessibilityTestPage() {
                 </TabsList>
                 <TabsContent value="tab1">
                   <p className="py-4">
-                    This is the content for the first tab. You can navigate between tabs
-                    using left and right arrow keys.
+                    This is the content for the first tab. You can navigate
+                    between tabs using left and right arrow keys.
                   </p>
                 </TabsContent>
                 <TabsContent value="tab2">
                   <p className="py-4">
-                    This is the content for the second tab. Keyboard users can navigate
-                    here with arrow keys.
+                    This is the content for the second tab. Keyboard users can
+                    navigate here with arrow keys.
                   </p>
                 </TabsContent>
                 <TabsContent value="tab3">
                   <p className="py-4">
-                    This is the content for the third tab. Screen readers will announce
-                    tab changes.
+                    This is the content for the third tab. Screen readers will
+                    announce tab changes.
                   </p>
                 </TabsContent>
               </Tabs>
@@ -318,37 +308,32 @@ export default function AccessibilityTestPage() {
             <CardContent>
               <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
-                  <AccordionTrigger>
-                    First Accordion Item
-                  </AccordionTrigger>
+                  <AccordionTrigger>First Accordion Item</AccordionTrigger>
                   <AccordionContent>
-                    This is the content for the first accordion item. You can expand or
-                    collapse this content using the Enter or Space key.
+                    This is the content for the first accordion item. You can
+                    expand or collapse this content using the Enter or Space
+                    key.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-2">
-                  <AccordionTrigger>
-                    Second Accordion Item
-                  </AccordionTrigger>
+                  <AccordionTrigger>Second Accordion Item</AccordionTrigger>
                   <AccordionContent>
-                    The accordion component includes proper ARIA attributes to make it
-                    accessible to screen reader users.
+                    The accordion component includes proper ARIA attributes to
+                    make it accessible to screen reader users.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-3">
-                  <AccordionTrigger>
-                    Third Accordion Item
-                  </AccordionTrigger>
+                  <AccordionTrigger>Third Accordion Item</AccordionTrigger>
                   <AccordionContent>
-                    Screen readers will announce the expanded/collapsed state of each
-                    accordion item.
+                    Screen readers will announce the expanded/collapsed state of
+                    each accordion item.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
             </CardContent>
           </Card>
         </div>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Dialog Testing</CardTitle>
@@ -358,10 +343,11 @@ export default function AccessibilityTestPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-4">
-              Dialogs should trap focus within them when open and return focus to the trigger
-              button when closed. You should be able to close the dialog with the Escape key.
+              Dialogs should trap focus within them when open and return focus
+              to the trigger button when closed. You should be able to close the
+              dialog with the Escape key.
             </p>
-            
+
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button>Open Dialog</Button>
@@ -370,28 +356,34 @@ export default function AccessibilityTestPage() {
                 <DialogHeader>
                   <DialogTitle id="dialog-title">Accessible Dialog</DialogTitle>
                   <DialogDescription id="dialog-description">
-                    This dialog traps focus within it while open. Try using Tab to navigate
-                    the focusable elements inside.
+                    This dialog traps focus within it while open. Try using Tab
+                    to navigate the focusable elements inside.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
                   <p>
-                    Press Tab to navigate through the focusable elements in this dialog.
-                    Focus should be trapped within the dialog until it is closed.
+                    Press Tab to navigate through the focusable elements in this
+                    dialog. Focus should be trapped within the dialog until it
+                    is closed.
                   </p>
                   <div className="mt-4">
                     <Input placeholder="Try focusing this input" />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={() => {
-                    setDialogOpen(false);
-                    toast.success("Action completed");
-                    announce("Dialog action completed", "polite");
-                  }}>
+                  <Button
+                    onClick={() => {
+                      setDialogOpen(false);
+                      toast.success("Action completed");
+                      announce("Dialog action completed", "polite");
+                    }}
+                  >
                     Continue
                   </Button>
                 </DialogFooter>
@@ -406,7 +398,7 @@ export default function AccessibilityTestPage() {
         <h2 id="contrast-heading" className="text-2xl font-semibold">
           Color Contrast Testing
         </h2>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Text Color Contrast</CardTitle>
@@ -430,7 +422,7 @@ export default function AccessibilityTestPage() {
                 Secondary foreground on secondary background
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <h3 className="text-xl font-semibold">State Colors</h3>
               <p className="text-destructive">
@@ -446,10 +438,8 @@ export default function AccessibilityTestPage() {
                 Accent foreground on accent background
               </div>
             </div>
-            
-            <Button onClick={runContrastAudit}>
-              Run Contrast Audit
-            </Button>
+
+            <Button onClick={runContrastAudit}>Run Contrast Audit</Button>
           </CardContent>
         </Card>
       </section>
@@ -459,7 +449,7 @@ export default function AccessibilityTestPage() {
         <h2 id="screen-reader-heading" className="text-2xl font-semibold">
           Screen Reader Testing
         </h2>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Screen Reader Announcements</CardTitle>
@@ -471,11 +461,12 @@ export default function AccessibilityTestPage() {
             <div className="space-y-2">
               <h3 className="text-lg font-medium">Live Region Announcements</h3>
               <p>
-                Click the buttons below to trigger announcements that should be read by screen readers.
+                Click the buttons below to trigger announcements that should be
+                read by screen readers.
               </p>
-              
+
               <div className="flex flex-wrap gap-2">
-                <Button 
+                <Button
                   onClick={() => {
                     announce("This is a polite announcement", "polite");
                     toast.info("Polite announcement triggered");
@@ -483,8 +474,8 @@ export default function AccessibilityTestPage() {
                 >
                   Polite Announcement
                 </Button>
-                
-                <Button 
+
+                <Button
                   onClick={() => {
                     announce("This is an assertive announcement", "assertive");
                     toast.warning("Assertive announcement triggered");
@@ -494,28 +485,50 @@ export default function AccessibilityTestPage() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <h3 className="text-lg font-medium">Hidden Content</h3>
               <p>
-                The following text has content that is only available to screen readers.
+                The following text has content that is only available to screen
+                readers.
               </p>
-              
+
               <div className="border p-4 rounded">
                 <p>
-                  This chart shows 
+                  This chart shows
                   <span className="sr-only">
-                    quarterly revenue data for the fiscal year 2023, with an upward trend from Q1 to Q4
+                    quarterly revenue data for the fiscal year 2023, with an
+                    upward trend from Q1 to Q4
                   </span>
-                  <span aria-hidden="true">
-                    revenue data for 2023
-                  </span>.
+                  <span aria-hidden="true">revenue data for 2023</span>.
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </section>
+
+      {/* Diagnostic Dialog */}
+      <Dialog
+        open={diagnosticDialogOpen}
+        onOpenChange={setDiagnosticDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Color Contrast Diagnostic Report</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded overflow-auto max-h-96">
+              {diagnosticContent}
+            </pre>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setDiagnosticDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

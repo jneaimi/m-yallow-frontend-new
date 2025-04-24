@@ -1,6 +1,6 @@
-import { toast, ToastOptions } from 'sonner';
+import { toast } from "sonner";
 
-export type NotificationOptions = ToastOptions;
+export type NotificationOptions = Parameters<typeof toast>[1];
 
 /**
  * Show a default notification
@@ -48,10 +48,10 @@ export function notifyWarning(message: string, options?: NotificationOptions) {
  * @param options - Additional toast options
  */
 export function notifyInfo(message: string, options?: NotificationOptions) {
-  return toast(message, { 
-    className: 'info',
+  return toast(message, {
+    className: "info",
     duration: 4000,
-    ...options
+    ...options,
   });
 }
 
@@ -63,9 +63,9 @@ export function notifyInfo(message: string, options?: NotificationOptions) {
  * @param options - Additional toast options
  */
 export function notifyWithAction(
-  message: string, 
-  actionLabel: string, 
-  onAction: () => void, 
+  message: string,
+  actionLabel: string,
+  onAction: () => void,
   options?: NotificationOptions
 ) {
   return toast(message, {

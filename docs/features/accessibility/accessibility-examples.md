@@ -27,12 +27,15 @@ This document provides practical examples of implementing accessibility features
 ### Toggle Button States
 
 ```tsx
-function ToggleButton({ isActive, label }: { isActive: boolean; label: string }) {
+function ToggleButton({
+  isActive,
+  label,
+}: {
+  isActive: boolean;
+  label: string;
+}) {
   return (
-    <Button 
-      aria-pressed={isActive} 
-      onClick={() => setIsActive(!isActive)}
-    >
+    <Button aria-pressed={isActive} onClick={() => setIsActive(!isActive)}>
       {label}
     </Button>
   );
@@ -45,34 +48,38 @@ function ToggleButton({ isActive, label }: { isActive: boolean; label: string })
 function AccessibleDropdown() {
   const menuRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (!isOpen) return;
-    
-    const items = Array.from(menuRef.current?.querySelectorAll('[role="menuitem"]') || []);
-    const currentIndex = items.findIndex(item => item === document.activeElement);
-    
+
+    const items = Array.from(
+      menuRef.current?.querySelectorAll('[role="menuitem"]') || []
+    );
+    const currentIndex = items.findIndex(
+      (item) => item === document.activeElement
+    );
+
     switch (e.key) {
-      case 'ArrowDown':
+      case "ArrowDown":
         e.preventDefault();
         const nextIndex = (currentIndex + 1) % items.length;
         (items[nextIndex] as HTMLElement).focus();
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         e.preventDefault();
         const prevIndex = (currentIndex - 1 + items.length) % items.length;
         (items[prevIndex] as HTMLElement).focus();
         break;
-      case 'Escape':
+      case "Escape":
         e.preventDefault();
         setIsOpen(false);
         break;
     }
   }
-  
+
   return (
     <div onKeyDown={handleKeyDown}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="menu"
@@ -80,14 +87,16 @@ function AccessibleDropdown() {
         Menu
       </button>
       {isOpen && (
-        <div 
-          ref={menuRef} 
-          role="menu"
-          tabIndex={-1}
-        >
-          <button role="menuitem" tabIndex={0}>Option 1</button>
-          <button role="menuitem" tabIndex={0}>Option 2</button>
-          <button role="menuitem" tabIndex={0}>Option 3</button>
+        <div ref={menuRef} role="menu" tabIndex={-1}>
+          <button role="menuitem" tabIndex={0}>
+            Option 1
+          </button>
+          <button role="menuitem" tabIndex={-1}>
+            Option 2
+          </button>
+          <button role="menuitem" tabIndex={-1}>
+            Option 3
+          </button>
         </div>
       )}
     </div>
@@ -98,11 +107,11 @@ function AccessibleDropdown() {
 ### Form Input with Accessibility
 
 ```tsx
-function AccessibleFormField({ 
-  id, 
-  label, 
-  required, 
-  error 
+function AccessibleFormField({
+  id,
+  label,
+  required,
+  error,
 }: {
   id: string;
   label: string;
@@ -110,7 +119,7 @@ function AccessibleFormField({
   error?: string;
 }) {
   const errorId = error ? `${id}-error` : undefined;
-  
+
   return (
     <div>
       <label htmlFor={id}>
@@ -118,7 +127,7 @@ function AccessibleFormField({
         {required && <span aria-hidden="true"> *</span>}
         {required && <span className="sr-only"> required</span>}
       </label>
-      <input 
+      <input
         id={id}
         aria-required={required}
         aria-invalid={!!error}
@@ -184,8 +193,8 @@ function AccessibleFormField({
 function Layout({ children }) {
   return (
     <>
-      <a 
-        href="#main-content" 
+      <a
+        href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:p-4 focus:bg-background focus:text-foreground focus:outline-none focus:ring"
       >
         Skip to main content
@@ -206,14 +215,14 @@ All dialogs must have a title to be accessible to screen readers. The title can 
 
 ```tsx
 import { useFocusTrap } from "@/lib/accessibility/keyboard-navigation";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogFooter, 
-  VisuallyHidden 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  VisuallyHidden,
 } from "@/components/ui/dialog";
 
 // GOOD: Dialog with visible title
@@ -254,7 +263,11 @@ function AccessibleDialogWithHiddenTitle({ isOpen, onOpenChange, children }) {
 }
 
 // GOOD: Alternative approach with VisuallyHidden component
-function AccessibleDialogWithVisuallyHiddenTitle({ isOpen, onOpenChange, children }) {
+function AccessibleDialogWithVisuallyHiddenTitle({
+  isOpen,
+  onOpenChange,
+  children,
+}) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -274,12 +287,12 @@ function AccessibleDialogWithVisuallyHiddenTitle({ isOpen, onOpenChange, childre
 function CustomAccessibleDialog({ isOpen, onClose, title, children }) {
   // Use focus trap hook from our utilities
   const dialogRef = useFocusTrap(isOpen);
-  
+
   // Save the active element to restore focus later
   useEffect(() => {
     if (isOpen) {
       const activeElement = document.activeElement;
-      
+
       // Clean up function
       return () => {
         // Restore focus when dialog closes
@@ -289,22 +302,24 @@ function CustomAccessibleDialog({ isOpen, onClose, title, children }) {
       };
     }
   }, [isOpen]);
-  
+
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      <div 
+      <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
         className="bg-background p-6 rounded-lg shadow-lg"
       >
-        <h2 id="dialog-title" className="text-lg font-semibold">{title}</h2>
+        <h2 id="dialog-title" className="text-lg font-semibold">
+          {title}
+        </h2>
         <div className="my-4">{children}</div>
         <div className="mt-4 flex justify-end">
-          <button 
+          <button
             onClick={onClose}
             className="bg-primary text-primary-foreground px-4 py-2 rounded"
           >
@@ -337,34 +352,31 @@ function InaccessibleDialog({ isOpen, onOpenChange, children }) {
 ```tsx
 function AccessibleTabs({ tabs }) {
   const [activeTab, setActiveTab] = useState(0);
-  
+
   function handleKeyDown(e: React.KeyboardEvent) {
     switch (e.key) {
-      case 'ArrowRight':
+      case "ArrowRight":
         e.preventDefault();
         setActiveTab((activeTab + 1) % tabs.length);
         break;
-      case 'ArrowLeft':
+      case "ArrowLeft":
         e.preventDefault();
         setActiveTab((activeTab - 1 + tabs.length) % tabs.length);
         break;
-      case 'Home':
+      case "Home":
         e.preventDefault();
         setActiveTab(0);
         break;
-      case 'End':
+      case "End":
         e.preventDefault();
         setActiveTab(tabs.length - 1);
         break;
     }
   }
-  
+
   return (
     <div>
-      <div 
-        role="tablist" 
-        onKeyDown={handleKeyDown}
-      >
+      <div role="tablist" onKeyDown={handleKeyDown}>
         {tabs.map((tab, index) => (
           <button
             key={index}
@@ -379,7 +391,7 @@ function AccessibleTabs({ tabs }) {
           </button>
         ))}
       </div>
-      
+
       <div>
         {tabs.map((tab, index) => (
           <div
@@ -423,30 +435,33 @@ function showAuditReport() {
 ```tsx
 function NotificationSystem() {
   const [notifications, setNotifications] = useState([]);
-  
+
   function addNotification(message) {
     const id = Date.now();
     setNotifications([...notifications, { id, message }]);
-    
+
     // Auto-remove after 5 seconds
     setTimeout(() => {
-      setNotifications(current => current.filter(n => n.id !== id));
+      setNotifications((current) => current.filter((n) => n.id !== id));
     }, 5000);
   }
-  
+
   return (
     <>
       <button onClick={() => addNotification("Action completed successfully")}>
         Test Notification
       </button>
-      
-      <div 
-        aria-live="polite" 
+
+      <div
+        aria-live="polite"
         aria-atomic="true"
         className="fixed bottom-4 right-4 z-50"
       >
         {notifications.map(({ id, message }) => (
-          <div key={id} className="bg-primary text-primary-foreground p-4 rounded mb-2">
+          <div
+            key={id}
+            className="bg-primary text-primary-foreground p-4 rounded mb-2"
+          >
             {message}
           </div>
         ))}
@@ -464,10 +479,10 @@ function TableWithAccessibleCaption() {
     <div>
       <h2 id="table-title">User Data</h2>
       <p id="table-desc" className="sr-only">
-        This table shows user information including name, email, and account status.
-        Click on a row to view detailed user information.
+        This table shows user information including name, email, and account
+        status. Click on a row to view detailed user information.
       </p>
-      
+
       <table aria-labelledby="table-title" aria-describedby="table-desc">
         <thead>
           <tr>
@@ -521,24 +536,24 @@ function TableWithAccessibleCaption() {
 ### Accessible Error Messages
 
 ```tsx
-function AccessibleFormField({ 
-  id, 
-  label, 
+function AccessibleFormField({
+  id,
+  label,
   value,
   onChange,
   required,
-  validate
+  validate,
 }) {
   const [error, setError] = useState("");
   const errorId = error ? `${id}-error` : undefined;
-  
+
   function handleBlur() {
     if (validate) {
       const validationError = validate(value);
       setError(validationError || "");
     }
   }
-  
+
   return (
     <div className="mb-4">
       <label htmlFor={id} className="block mb-1">
@@ -546,8 +561,8 @@ function AccessibleFormField({
         {required && <span aria-hidden="true"> *</span>}
         {required && <span className="sr-only"> required</span>}
       </label>
-      
-      <input 
+
+      <input
         id={id}
         value={value}
         onChange={onChange}
@@ -555,15 +570,13 @@ function AccessibleFormField({
         aria-required={required}
         aria-invalid={!!error}
         aria-describedby={errorId}
-        className={`border rounded p-2 w-full ${error ? 'border-destructive' : 'border-input'}`}
+        className={`border rounded p-2 w-full ${
+          error ? "border-destructive" : "border-input"
+        }`}
       />
-      
+
       {error && (
-        <div 
-          id={errorId} 
-          className="text-destructive mt-1"
-          role="alert"
-        >
+        <div id={errorId} className="text-destructive mt-1" role="alert">
           {error}
         </div>
       )}
@@ -576,13 +589,13 @@ function AccessibleFormField({
   id="email"
   label="Email Address"
   value={email}
-  onChange={e => setEmail(e.target.value)}
+  onChange={(e) => setEmail(e.target.value)}
   required
-  validate={value => {
-    if (!value.includes('@')) return "Please enter a valid email address";
+  validate={(value) => {
+    if (!value.includes("@")) return "Please enter a valid email address";
     return "";
   }}
-/>
+/>;
 ```
 
 ## Full Page Examples
@@ -596,87 +609,81 @@ function LoginPage() {
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
-  
+
   function validateForm() {
     const errors = {};
-    
+
     if (!email) {
       errors.email = "Email is required";
-    } else if (!email.includes('@')) {
+    } else if (!email.includes("@")) {
       errors.email = "Please enter a valid email address";
     }
-    
+
     if (!password) {
       errors.password = "Password is required";
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }
-  
+
   async function handleSubmit(e) {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Simulated login API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       setSubmitStatus({
         type: "success",
-        message: "Login successful. Redirecting..."
+        message: "Login successful. Redirecting...",
       });
-      
+
       // Redirect or update state
     } catch (error) {
       setSubmitStatus({
         type: "error",
-        message: "Login failed. Please check your credentials."
+        message: "Login failed. Please check your credentials.",
       });
     } finally {
       setIsSubmitting(false);
     }
   }
-  
+
   return (
     <main id="main-content" className="p-6">
       <h1>Log In to Your Account</h1>
-      
+
       <form onSubmit={handleSubmit} noValidate>
         <div className="space-y-4">
           <AccessibleFormField
             id="email"
             label="Email Address"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             required
             error={formErrors.email}
           />
-          
+
           <AccessibleFormField
             id="password"
             label="Password"
             type="password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             required
             error={formErrors.password}
           />
-          
+
           <div className="flex items-center">
-            <input
-              id="remember"
-              type="checkbox"
-              className="h-4 w-4 mr-2"
-            />
-            <label htmlFor="remember">
-              Remember me
-            </label>
+            <input id="remember" type="checkbox" className="h-4 w-4 mr-2" />
+            <label htmlFor="remember">Remember me</label>
           </div>
-          
+
           <button
             type="submit"
             className="bg-primary text-primary-foreground px-4 py-2 rounded"
@@ -687,22 +694,22 @@ function LoginPage() {
           </button>
         </div>
       </form>
-      
+
       {submitStatus && (
-        <div 
+        <div
           role="alert"
           className={`mt-4 p-4 rounded ${
-            submitStatus.type === "success" 
-              ? "bg-green-100 text-green-800" 
+            submitStatus.type === "success"
+              ? "bg-green-100 text-green-800"
               : "bg-red-100 text-red-800"
           }`}
         >
           {submitStatus.message}
         </div>
       )}
-      
+
       <div className="mt-6">
-        <a 
+        <a
           href="/reset-password"
           className="text-primary hover:underline focus:outline-none focus:ring"
         >
@@ -720,7 +727,7 @@ function LoginPage() {
 function UsersTable({ users, onUserSelect }) {
   const [sortField, setSortField] = useState("name");
   const [sortDirection, setSortDirection] = useState("asc");
-  
+
   function handleSort(field) {
     if (field === sortField) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -729,35 +736,36 @@ function UsersTable({ users, onUserSelect }) {
       setSortDirection("asc");
     }
   }
-  
+
   // Sort the users
   const sortedUsers = [...users].sort((a, b) => {
     const aValue = a[sortField]?.toLowerCase();
     const bValue = b[sortField]?.toLowerCase();
-    
+
     if (sortDirection === "asc") {
       return aValue.localeCompare(bValue);
     } else {
       return bValue.localeCompare(aValue);
     }
   });
-  
+
   return (
     <div className="overflow-x-auto">
       <h2 id="users-table-title">User Data</h2>
       <p id="users-table-desc" className="sr-only">
-        A sortable table of users. Click on column headers to sort. Click on a row to view user details.
+        A sortable table of users. Click on column headers to sort. Click on a
+        row to view user details.
       </p>
-      
-      <table 
-        className="w-full border-collapse" 
+
+      <table
+        className="w-full border-collapse"
         aria-labelledby="users-table-title"
         aria-describedby="users-table-desc"
       >
         <thead>
           <tr>
             <th scope="col">
-              <button 
+              <button
                 onClick={() => handleSort("name")}
                 className="flex items-center font-bold w-full text-left"
                 aria-sort={sortField === "name" ? sortDirection : "none"}
@@ -771,7 +779,7 @@ function UsersTable({ users, onUserSelect }) {
               </button>
             </th>
             <th scope="col">
-              <button 
+              <button
                 onClick={() => handleSort("email")}
                 className="flex items-center font-bold w-full text-left"
                 aria-sort={sortField === "email" ? sortDirection : "none"}
@@ -785,7 +793,7 @@ function UsersTable({ users, onUserSelect }) {
               </button>
             </th>
             <th scope="col">
-              <button 
+              <button
                 onClick={() => handleSort("status")}
                 className="flex items-center font-bold w-full text-left"
                 aria-sort={sortField === "status" ? sortDirection : "none"}
@@ -801,13 +809,13 @@ function UsersTable({ users, onUserSelect }) {
           </tr>
         </thead>
         <tbody>
-          {sortedUsers.map(user => (
-            <tr 
+          {sortedUsers.map((user) => (
+            <tr
               key={user.id}
               onClick={() => onUserSelect(user)}
               tabIndex={0}
               className="cursor-pointer hover:bg-accent"
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   onUserSelect(user);
@@ -817,10 +825,10 @@ function UsersTable({ users, onUserSelect }) {
               <td className="p-2 border">{user.name}</td>
               <td className="p-2 border">{user.email}</td>
               <td className="p-2 border">
-                <span 
+                <span
                   className={`px-2 py-1 rounded ${
-                    user.status === "active" 
-                      ? "bg-green-100 text-green-800" 
+                    user.status === "active"
+                      ? "bg-green-100 text-green-800"
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
@@ -831,7 +839,7 @@ function UsersTable({ users, onUserSelect }) {
           ))}
         </tbody>
       </table>
-      
+
       {users.length === 0 && (
         <div className="text-center p-4 border" role="status">
           No users found
@@ -847,7 +855,7 @@ function UsersTable({ users, onUserSelect }) {
 ```tsx
 function MainNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   // Close the mobile menu when Escape key is pressed
   useEffect(() => {
     function handleKeyDown(e) {
@@ -855,19 +863,19 @@ function MainNavigation() {
         setIsMobileMenuOpen(false);
       }
     }
-    
+
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isMobileMenuOpen]);
-  
+
   return (
     <nav aria-label="Main navigation">
       {/* Desktop Navigation */}
       <div className="hidden md:flex">
         <ul role="menubar" className="flex space-x-4">
           <li role="none">
-            <a 
-              href="/" 
+            <a
+              href="/"
               role="menuitem"
               className="block p-2"
               aria-current={location.pathname === "/" ? "page" : undefined}
@@ -876,18 +884,20 @@ function MainNavigation() {
             </a>
           </li>
           <li role="none">
-            <a 
-              href="/products" 
+            <a
+              href="/products"
               role="menuitem"
               className="block p-2"
-              aria-current={location.pathname.startsWith("/products") ? "page" : undefined}
+              aria-current={
+                location.pathname.startsWith("/products") ? "page" : undefined
+              }
             >
               Products
             </a>
           </li>
           <li role="none">
-            <a 
-              href="/about" 
+            <a
+              href="/about"
               role="menuitem"
               className="block p-2"
               aria-current={location.pathname === "/about" ? "page" : undefined}
@@ -896,18 +906,20 @@ function MainNavigation() {
             </a>
           </li>
           <li role="none">
-            <a 
-              href="/contact" 
+            <a
+              href="/contact"
               role="menuitem"
               className="block p-2"
-              aria-current={location.pathname === "/contact" ? "page" : undefined}
+              aria-current={
+                location.pathname === "/contact" ? "page" : undefined
+              }
             >
               Contact
             </a>
           </li>
         </ul>
       </div>
-      
+
       {/* Mobile Navigation */}
       <div className="md:hidden">
         <button
@@ -919,13 +931,16 @@ function MainNavigation() {
         >
           {isMobileMenuOpen ? "Close" : "Menu"}
         </button>
-        
+
         {isMobileMenuOpen && (
-          <div id="mobile-menu" className="absolute left-0 right-0 bg-background p-4 shadow-lg">
+          <div
+            id="mobile-menu"
+            className="absolute left-0 right-0 bg-background p-4 shadow-lg"
+          >
             <ul role="menu" className="space-y-2">
               <li role="none">
-                <a 
-                  href="/" 
+                <a
+                  href="/"
                   role="menuitem"
                   className="block p-2"
                   aria-current={location.pathname === "/" ? "page" : undefined}

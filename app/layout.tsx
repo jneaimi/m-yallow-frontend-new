@@ -31,8 +31,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <script dangerouslySetInnerHTML={{ __html: `
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
           (function() {
             try {
               const persistedTheme = localStorage.getItem('theme');
@@ -47,7 +52,9 @@ export default function RootLayout({
               console.warn('Failed to initialize theme:', e);
             }
           })();
-        ` }} />
+        `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
@@ -55,21 +62,21 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {/* Screen reader announcements live region */}
           <LiveRegion id="a11y-announcer" politeness="polite" />
-          
+
           {/* Skip link for keyboard users */}
           <SkipLink />
-          
+
           {/* Accessible toast notifications */}
-          <Toaster toastOptions={{ role: 'status', ariaLive: 'polite' }} />
-          
+          <Toaster />
+
           {/* Header with landmark role */}
           <Header />
-          
+
           {/* Main content with id for skip link target */}
           <main id="main-content" className="flex-1" tabIndex={-1}>
             {children}
           </main>
-          
+
           {/* Footer with landmark role */}
           <Footer />
         </ThemeProvider>
