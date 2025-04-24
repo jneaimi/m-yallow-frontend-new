@@ -22,6 +22,24 @@ Key components:
 - System preference detection
 - Anti-flash implementation
 
+### 2. Global Header
+- **FR-01.2.4: Global Header Implementation**
+- **Purpose:** Create a consistent header for all pages
+- **Status:** Implemented ✅
+- **Documentation:**
+  - [Header Guide](./header.md)
+  - [Technical Specification](./header/technical-spec.md)
+  - [Usage Examples](./header/usage-examples.md)
+
+The global header provides a consistent navigation structure across all pages of the application. It features responsive design that adapts to various screen sizes and integrates the theme toggle functionality.
+
+Key components:
+- Responsive header layout
+- Desktop and mobile navigation
+- User authentication status controls
+- Theme toggle integration
+- Dropdown navigation for nested menu items
+
 ## Upcoming Features
 
 ### 2. User Authentication
