@@ -195,6 +195,48 @@ export function ShowOnMobile({
     </div>
   );
 }
+
+// Advanced component with validation and flexible breakpoint control
+export function Show({
+  children,
+  className,
+  from,
+  until,
+  keepInDOM = true,
+  ...props
+}: BreakpointVisibilityProps) {
+  // Validate breakpoint values
+  if (from && !(from in breakpoints)) {
+    console.error(`Invalid 'from' breakpoint: ${from}`);
+    return null;
+  }
+  if (until && !(until in breakpoints)) {
+    console.error(`Invalid 'until' breakpoint: ${until}`);
+    return null;
+  }
+  
+  // Ensure logical breakpoint order
+  if (from && until) {
+    const fromIndex = Object.keys(breakpoints).indexOf(from);
+    const untilIndex = Object.keys(breakpoints).indexOf(until);
+    if (fromIndex > untilIndex) {
+      console.error(`'from' breakpoint (${from}) cannot be larger than 'until' breakpoint (${until})`);
+      return null;
+    }
+  }
+  
+  // Client-side only rendering with dynamic media query check
+  if (!keepInDOM) {
+    // Implementation details omitted for brevity
+  }
+  
+  // Render with Tailwind classes for visibility control
+  return (
+    <div className={cn(visibilityClasses, className)} {...props}>
+      {children}
+    </div>
+  );
+}
 ```
 
 Key implementation notes:
@@ -202,6 +244,9 @@ Key implementation notes:
 - Simple API for common visibility patterns
 - Maintains accessibility by using display properties instead of removing content
 - Supports passing additional className for customization
+- Includes robust validation for breakpoint values
+- Uses proper media query handling with breakpoint pixel values
+- Supports both CSS-based visibility and DOM-based conditional rendering
 
 ### Global CSS Responsive Utilities
 
@@ -305,6 +350,13 @@ The system gracefully degrades for older browsers:
 - Focus visibility maintained across breakpoints
 - Tab order remains logical on all devices
 - Interactive elements accessible at all screen sizes
+
+### Interactive Components
+
+- Dropdown menus extend beyond their containers with `overflow-visible`
+- Proper z-index management ensures interactive elements are accessible
+- ARIA attributes (`aria-expanded`, `aria-controls`) for state communication
+- Sufficient contrast for interactive elements in both light and dark modes
 
 ## Testing Strategy
 

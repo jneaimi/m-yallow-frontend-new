@@ -71,7 +71,7 @@ export function HideOnTablet({
   ...props
 }: VisibilityProps) {
   return (
-    <div className={cn("hidden sm:block lg:block sm:lg:hidden", className)} {...props}>
+    <div className={cn("hidden sm:block lg:hidden", className)} {...props}>
       {children}
     </div>
   );
@@ -133,6 +133,25 @@ export function Show({
   keepInDOM = true,
   ...props
 }: BreakpointVisibilityProps) {
+  // Validate breakpoint values
+  if (from && !(from in breakpoints)) {
+    console.error(`Invalid 'from' breakpoint: ${from}`);
+    return null;
+  }
+  if (until && !(until in breakpoints)) {
+    console.error(`Invalid 'until' breakpoint: ${until}`);
+    return null;
+  }
+  
+  // Ensure logical breakpoint order
+  if (from && until) {
+    const fromIndex = Object.keys(breakpoints).indexOf(from);
+    const untilIndex = Object.keys(breakpoints).indexOf(until);
+    if (fromIndex > untilIndex) {
+      console.error(`'from' breakpoint (${from}) cannot be larger than 'until' breakpoint (${until})`);
+      return null;
+    }
+  }
   // Client-side only component for non-keepInDOM mode
   const ClientOnlyShow = () => {
     const [mounted, setMounted] = React.useState(false);
@@ -145,13 +164,13 @@ export function Show({
     
     const getMediaQuery = () => {
       if (from && until) {
-        return `@media (min-width: ${from}) and (max-width: ${until})`;
+        return `@media (min-width: ${breakpoints[from]}) and (max-width: ${breakpoints[until]})`;
       }
       if (from) {
-        return `@media (min-width: ${from})`;
+        return `@media (min-width: ${breakpoints[from]})`;
       }
       if (until) {
-        return `@media (max-width: ${until})`;
+        return `@media (max-width: ${breakpoints[until]})`;
       }
       return '';
     };

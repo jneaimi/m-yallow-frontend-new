@@ -155,6 +155,18 @@ export function SpecialFeature() {
       <Show from="xl">
         <p>Extra content for large displays</p>
       </Show>
+      
+      {/* Content completely removed from DOM when not visible */}
+      <Show from="lg" keepInDOM={false}>
+        <p>This content is not just hidden but completely removed from the DOM when screen is smaller than large</p>
+      </Show>
+      
+      {/* 
+        Important: Always use valid breakpoint values
+        The component will show errors in the console for:
+        - Invalid breakpoints: <Show from="invalid-value">
+        - Illogical ranges: <Show from="xl" until="sm">
+      */}
     </>
   );
 }
@@ -581,6 +593,47 @@ export default function TestLayout({ children }) {
   );
 }
 ```
+
+## Working with Dropdowns and Overflow
+
+When implementing components with dropdowns, tooltips, or other elements that need to extend beyond their container:
+
+```tsx
+import { ResponsiveContainer } from "@/components/ui/responsive";
+import { NavigationMenu } from "@/components/ui/navigation-menu";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
+
+export function HeaderWithDropdowns() {
+  return (
+    <header className="sticky top-0 z-[100]"> {/* High z-index for the header */}
+      <ResponsiveContainer className="overflow-visible"> {/* Allow content to overflow */}
+        <div className="flex justify-between items-center">
+          <NavigationMenu className="z-[101]"> {/* Higher z-index than parent */}
+            {/* Navigation menu content */}
+          </NavigationMenu>
+          
+          <div className="flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                {/* Trigger button */}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="z-[1000]"> {/* Highest z-index */}
+                {/* Dropdown content */}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </ResponsiveContainer>
+    </header>
+  );
+}
+```
+
+Key points:
+- Use `overflow-visible` on containers that have dropdown menus
+- Implement proper z-index hierarchy (container < trigger < dropdown content)
+- Avoid using `no-horizontal-overflow` on elements with dropdowns
+- For fixed/sticky headers, ensure dropdowns have higher z-index values
 
 ## Best Practices Demonstrations
 

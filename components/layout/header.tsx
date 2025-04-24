@@ -102,8 +102,8 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border no-horizontal-overflow">
-      <ResponsiveContainer>
+    <header className="sticky top-0 z-[100] w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      <ResponsiveContainer className="overflow-visible">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
@@ -117,7 +117,7 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <HideOnMobile>
-            <NavigationMenu>
+            <NavigationMenu className="z-[101]">
               <NavigationMenuList>
                 {navItems.map((item) => {
                   return item.children ? (
@@ -207,6 +207,9 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 className="touch-target"
+                aria-label="Main menu"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-navigation"
                 onClick={toggleMobileMenu}
               >
                 {mobileMenuOpen ? (
@@ -224,7 +227,7 @@ export function Header() {
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <ShowOnMobile>
-          <div className="flex flex-col space-y-3 px-4 py-6 bg-background border-t">
+          <div id="mobile-navigation" className="flex flex-col space-y-3 px-4 py-6 bg-background border-t">
             {navItems.map((item) => (
               <div key={item.title}>
                 {item.children ? (

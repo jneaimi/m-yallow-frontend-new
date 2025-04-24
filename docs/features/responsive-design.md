@@ -104,6 +104,25 @@ Pay special attention to:
 - Content readability
 - Interactive element sizing and spacing
 
+## Best Practices
+
+1. **Error Handling**: Components like `Show` validate breakpoint values and provide helpful error messages. Always use valid breakpoint names from the system.
+
+2. **Avoid Direct Window Access**: Use hooks like `useWindowWidth()` instead of directly accessing `window.innerWidth` to prevent hydration mismatches.
+
+3. **Proper Tailwind Usage**: Be careful with class combinations in responsive variants. Avoid invalid combinations like `sm:lg:hidden`.
+
+4. **Accessibility Considerations**: Make interactive elements accessible on all devices by using appropriate ARIA attributes like `aria-expanded` and `aria-controls`.
+
+5. **Media Query Construction**: Always use pixel values from the breakpoints object when constructing media queries rather than breakpoint names.
+
+6. **Overflow Handling**: Be careful with `overflow-hidden` or `no-horizontal-overflow` classes when working with components that need to display dropdowns or tooltips. Interactive elements often need to overflow their containers.
+
+7. **Z-Index Management**: Implement proper z-index hierarchy for interactive elements:
+   - Navigation and dropdowns should have higher z-index values (e.g., z-[100] or higher)
+   - Fixed/sticky headers should have high z-index values but lower than their dropdowns
+   - Modal/dialog overlays should have the highest z-index values
+
 ## Implementation Examples
 
 For detailed implementation examples, see [Usage Examples](./responsive-design/usage-examples.md).

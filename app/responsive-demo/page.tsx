@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ResponsiveContainer,
   ResponsiveGrid,
@@ -16,12 +16,29 @@ import { useActiveBreakpoint, useDeviceCategory } from "@/hooks/use-breakpoint";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
+ * Hook to safely handle window width measurements
+ */
+function useWindowWidth() {
+  const [width, setWidth] = useState<number | string>('?');
+  
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return width;
+}
+
+/**
  * A demo page showcasing the responsive design system components
  */
 export default function ResponsiveDemoPage() {
   const [count, setCount] = useState<number>(0);
   const activeBreakpoint = useActiveBreakpoint();
   const { isMobile, isTablet, isDesktop } = useDeviceCategory();
+  const windowWidth = useWindowWidth();
 
   return (
     <div className="no-horizontal-overflow pb-16">
@@ -34,7 +51,7 @@ export default function ResponsiveDemoPage() {
           {isTablet && " Tablet"}
           {isDesktop && " Desktop"}
         </p>
-        <p><strong>Window width:</strong> <span id="window-width">{typeof window !== 'undefined' ? window.innerWidth : '?'}</span>px</p>
+        <p><strong>Window width:</strong> <span id="window-width">{windowWidth}</span>px</p>
       </div>
 
       {/* Page Header */}

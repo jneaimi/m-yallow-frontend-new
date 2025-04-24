@@ -8,7 +8,6 @@ import {
   ResponsiveContainer,
   ResponsiveGrid,
   ResponsiveStack,
-  Show,
 } from "@/components/ui/responsive";
 
 type FooterColumnProps = {
