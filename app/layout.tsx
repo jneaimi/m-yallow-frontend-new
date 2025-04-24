@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { SkipLink } from "@/components/skip-link";
 import { LiveRegion } from "@/components/a11y/live-region";
+import { AuthStateAnnouncer } from "@/components/auth/auth-state-announcer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,31 +58,59 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
+      <ClerkProvider
+        appearance={{
+          elements: {
+            formButtonPrimary: 'bg-primary hover:bg-primary/90 text-primary-foreground',
+            card: 'bg-background border border-border shadow-md',
+            headerTitle: 'text-foreground',
+            headerSubtitle: 'text-muted-foreground',
+            socialButtonsBlockButton: 'border border-border bg-background text-foreground',
+            formFieldLabel: 'text-foreground',
+            formFieldInput: 'bg-background text-foreground border-border focus:border-ring',
+            footerActionText: 'text-muted-foreground',
+            footerActionLink: 'text-primary hover:text-primary/90',
+            identityPreview: 'bg-muted text-muted-foreground',
+            // Accessibility enhancements
+            formFieldLabelRow: 'focus-within:ring-2 focus-within:ring-ring rounded-sm',
+            // Forces high contrast on focused elements
+            formFieldInput__focus: 'outline-none ring-2 ring-ring ring-offset-2',
+          },
+        }}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {/* Screen reader announcements live region */}
-          <LiveRegion id="a11y-announcer" politeness="polite" />
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
+        >
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {/* Screen reader announcements live region */}
+            <LiveRegion id="a11y-announcer" politeness="polite" />
+            
+            {/* Authentication-specific announcer */}
+            <LiveRegion id="a11y-announcer-assertive" politeness="assertive" />
 
-          {/* Skip link for keyboard users */}
-          <SkipLink />
+            {/* Skip link for keyboard users */}
+            <SkipLink />
 
-          {/* Accessible toast notifications */}
-          <Toaster />
+            {/* Accessible toast notifications */}
+            <Toaster />
+            
+            {/* Auth state announcer for screen readers */}
+            {/* @ts-expect-error - Async Server Component */}
+            <AuthStateAnnouncer />
 
-          {/* Header with landmark role */}
-          <Header />
+            {/* Header with landmark role */}
+            <Header />
 
-          {/* Main content with id for skip link target */}
-          <main id="main-content" className="flex-1" tabIndex={-1}>
-            {children}
-          </main>
+            {/* Main content with id for skip link target */}
+            <main id="main-content" className="flex-1" tabIndex={-1}>
+              {children}
+            </main>
 
-          {/* Footer with landmark role */}
-          <Footer />
-        </ThemeProvider>
-      </body>
+            {/* Footer with landmark role */}
+            <Footer />
+          </ThemeProvider>
+        </body>
+      </ClerkProvider>
     </html>
   );
 }
