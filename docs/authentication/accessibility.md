@@ -28,6 +28,63 @@ All authentication flows must adhere to WCAG 2.1 AA standards, with special atte
 
 ## Implementation Guidelines
 
+### Authentication UI Components
+
+The application provides a set of accessible authentication UI components that handle common authentication actions:
+
+1. **SignInButton**:
+   ```tsx
+   import { SignInButton } from "@/components/auth";
+   
+   // Basic usage
+   <SignInButton />
+   
+   // With custom text and no icon (better for screen readers in some cases)
+   <SignInButton showIcon={false}>Login</SignInButton>
+   ```
+
+2. **SignUpButton**:
+   ```tsx
+   import { SignUpButton } from "@/components/auth";
+   
+   // Basic usage
+   <SignUpButton />
+   
+   // With custom styling
+   <SignUpButton variant="secondary" />
+   ```
+
+3. **SignOutButton**:
+   ```tsx
+   import { SignOutButton } from "@/components/auth";
+   
+   // Basic usage
+   <SignOutButton />
+   
+   // With loading state handling and announcements
+   <SignOutButton redirectUrl="/signed-out" />
+   ```
+
+4. **UserProfileButton**:
+   ```tsx
+   import { UserProfileButton } from "@/components/auth";
+   
+   // Simple button with icon
+   <UserProfileButton />
+   
+   // With user name for better recognition
+   <UserProfileButton showName />
+   
+   // As dropdown menu with multiple actions
+   <UserProfileButton displayMode="dropdown" />
+   ```
+
+These components automatically handle:
+- Conditional rendering based on authentication state
+- Loading states with proper ARIA attributes
+- Screen reader announcements for state changes
+- Keyboard navigation
+
 ### Forms and Inputs
 
 1. **Form Structure**:
@@ -334,41 +391,26 @@ All authentication flows must adhere to WCAG 2.1 AA standards, with special atte
    }
    ```
 
-2. **Accessible Sign-Out Button**:
+2. **Using Authentication UI Components**:
    ```tsx
    'use client';
    
-   import { useClerk } from '@clerk/nextjs';
-   import { announceAuthStateChange } from '@/lib/accessibility/auth';
+   import { 
+     SignInButton, 
+     SignUpButton, 
+     SignOutButton, 
+     UserProfileButton 
+   } from "@/components/auth";
    
-   export function SignOutButton() {
-     const { signOut } = useClerk();
-     const [loading, setLoading] = useState(false);
-     
-     const handleSignOut = async () => {
-       setLoading(true);
-       
-       try {
-         await signOut();
-         
-         // Announce sign out to screen readers
-         announceAuthStateChange('You have been signed out successfully.');
-       } catch (error) {
-         console.error('Sign out failed', error);
-       } finally {
-         setLoading(false);
-       }
-     };
-     
+   export function AuthenticationActions() {
      return (
-       <button
-         onClick={handleSignOut}
-         disabled={loading}
-         aria-busy={loading}
-         className="text-sm font-medium text-destructive hover:text-destructive/90"
-       >
-         {loading ? 'Signing Out...' : 'Sign Out'}
-       </button>
+       <div className="flex gap-2">
+         {/* These components conditionally render based on auth state */}
+         <SignInButton variant="outline" />
+         <SignUpButton variant="default" />
+         <SignOutButton variant="ghost" />
+         <UserProfileButton displayMode="dropdown" />
+       </div>
      );
    }
    ```
@@ -404,3 +446,4 @@ All authentication flows must adhere to WCAG 2.1 AA standards, with special atte
 - [WCAG 2.1 Form Accessibility](https://www.w3.org/WAI/standards-guidelines/wcag/glance/)
 - [WAI-ARIA Authoring Practices for Forms](https://www.w3.org/WAI/ARIA/apg/patterns/forms/)
 - [WebAIM Screen Reader Testing Guide](https://webaim.org/articles/screenreader_testing/)
+- [Authentication UI Components Documentation](./FR-01.3.3-implementation.md)
