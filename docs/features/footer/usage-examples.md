@@ -77,6 +77,8 @@ const footerLinks = [
 
 ```tsx
 // /components/layout/footer.tsx
+import Link from "next/link";
+
 <div className="flex flex-col">
   <Link href="/" className="flex items-center space-x-2 mb-2">
     {/* Custom logo */}
@@ -95,6 +97,7 @@ const footerLinks = [
 
 ```tsx
 // /components/layout/footer.tsx
+import Link from "next/link";
 import { Github, Twitter, Linkedin, Mail, Youtube, Instagram } from "lucide-react";
 
 // In the Footer component
@@ -139,6 +142,9 @@ import { Github, Twitter, Linkedin, Mail, Youtube, Instagram } from "lucide-reac
 
 ```tsx
 // /components/layout/footer.tsx
+// Get the current year for the copyright notice
+const currentYear = new Date().getFullYear();
+
 <p className="text-sm text-muted-foreground">
   © {currentYear} Acme Corporation. All rights reserved. Registered in Delaware No. 12345678.
 </p>
@@ -178,6 +184,7 @@ import { Button } from "@/components/ui/button";
 ```tsx
 // /components/layout/footer.tsx
 import { Globe } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -246,15 +253,18 @@ export function CondensedFooter() {
 
 ## Integration with Authentication
 
-You can customize the footer based on authentication status:
+You can customize the footer based on authentication status by creating a new implementation that extends the default footer functionality:
 
 ```tsx
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth"; // Your authentication hook
 
-export function Footer() {
+// Note: This is a complete replacement for the default Footer component
+// Create this as a new file like 'auth-footer.tsx' and use it instead of the default Footer
+export function AuthAwareFooter() {
   const { user } = useAuth();
   const currentYear = new Date().getFullYear();
   
