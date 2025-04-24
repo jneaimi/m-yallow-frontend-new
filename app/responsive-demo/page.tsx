@@ -1,5 +1,5 @@
 "use client";
-
+import { breakpoints } from "@/lib/responsive/breakpoints";
 import { useState, useEffect } from "react";
 import {
   ResponsiveContainer,
@@ -13,21 +13,28 @@ import {
 } from "@/components/ui/responsive";
 import { Button } from "@/components/ui/button";
 import { useActiveBreakpoint, useDeviceCategory } from "@/hooks/use-breakpoint";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 /**
  * Hook to safely handle window width measurements
  */
 function useWindowWidth() {
-  const [width, setWidth] = useState<number | string>('?');
-  
+  const [width, setWidth] = useState<number | string>("?");
+
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
-  
+
   return width;
 }
 
@@ -44,21 +51,28 @@ export default function ResponsiveDemoPage() {
     <div className="no-horizontal-overflow pb-16">
       {/* Responsive Debugger - Sticky Floating Display */}
       <div className="fixed bottom-4 right-4 bg-card border rounded p-2 z-50 text-xs opacity-75 hover:opacity-100">
-        <p><strong>Current breakpoint:</strong> {activeBreakpoint}</p>
+        <p>
+          <strong>Current breakpoint:</strong> {activeBreakpoint}
+        </p>
         <p>
           <strong>Device category:</strong>
           {isMobile && " Mobile"}
           {isTablet && " Tablet"}
           {isDesktop && " Desktop"}
         </p>
-        <p><strong>Window width:</strong> <span id="window-width">{windowWidth}</span>px</p>
+        <p>
+          <strong>Window width:</strong>{" "}
+          <span id="window-width">{windowWidth}</span>px
+        </p>
       </div>
 
       {/* Page Header */}
       <header className="border-b">
         <ResponsiveContainer>
           <div className="py-6">
-            <h1 className="text-responsive-xl font-bold">Responsive Design System</h1>
+            <h1 className="text-responsive-xl font-bold">
+              Responsive Design System
+            </h1>
             <p className="text-responsive text-muted-foreground">
               Demonstration of responsive components and utilities
             </p>
@@ -70,25 +84,37 @@ export default function ResponsiveDemoPage() {
         {/* Responsive Container Demo */}
         <section className="py-8 border-b">
           <ResponsiveContainer>
-            <h2 className="text-responsive-lg font-semibold mb-4">ResponsiveContainer</h2>
+            <h2 className="text-responsive-lg font-semibold mb-4">
+              ResponsiveContainer
+            </h2>
             <p className="mb-6">
-              This section is wrapped in a ResponsiveContainer with default settings.
-              Notice how it maintains appropriate width and padding across screen sizes.
+              This section is wrapped in a ResponsiveContainer with default
+              settings. Notice how it maintains appropriate width and padding
+              across screen sizes.
             </p>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="border border-dashed rounded p-4 text-center">
-                <ResponsiveContainer maxWidth="sm" className="bg-muted p-4 rounded">
+                <ResponsiveContainer
+                  maxWidth="sm"
+                  className="bg-muted p-4 rounded"
+                >
                   <p>Small Container (sm)</p>
                 </ResponsiveContainer>
               </div>
               <div className="border border-dashed rounded p-4 text-center">
-                <ResponsiveContainer maxWidth="md" className="bg-muted p-4 rounded">
+                <ResponsiveContainer
+                  maxWidth="md"
+                  className="bg-muted p-4 rounded"
+                >
                   <p>Medium Container (md)</p>
                 </ResponsiveContainer>
               </div>
               <div className="border border-dashed rounded p-4 text-center">
-                <ResponsiveContainer maxWidth="lg" className="bg-muted p-4 rounded">
+                <ResponsiveContainer
+                  maxWidth="lg"
+                  className="bg-muted p-4 rounded"
+                >
                   <p>Large Container (lg)</p>
                 </ResponsiveContainer>
               </div>
@@ -99,19 +125,16 @@ export default function ResponsiveDemoPage() {
         {/* Responsive Grid Demo */}
         <section className="py-8 border-b">
           <ResponsiveContainer>
-            <h2 className="text-responsive-lg font-semibold mb-4">ResponsiveGrid</h2>
+            <h2 className="text-responsive-lg font-semibold mb-4">
+              ResponsiveGrid
+            </h2>
             <p className="mb-6">
-              The grid below changes its column count based on screen size:
-              1 column on mobile, 2 on small screens, 3 on medium screens, and 4 on large screens.
+              The grid below changes its column count based on screen size: 1
+              column on mobile, 2 on small screens, 3 on medium screens, and 4
+              on large screens.
             </p>
 
-            <ResponsiveGrid
-              cols={1}
-              smCols={2}
-              mdCols={3}
-              lgCols={4}
-              gap="4"
-            >
+            <ResponsiveGrid cols={1} smCols={2} mdCols={3} lgCols={4} gap="4">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
                 <div
                   key={item}
@@ -127,17 +150,21 @@ export default function ResponsiveDemoPage() {
         {/* Responsive Stack Demo */}
         <section className="py-8 border-b">
           <ResponsiveContainer>
-            <h2 className="text-responsive-lg font-semibold mb-4">ResponsiveStack</h2>
+            <h2 className="text-responsive-lg font-semibold mb-4">
+              ResponsiveStack
+            </h2>
             <p className="mb-6">
-              The stack below changes from vertical to horizontal layout at the medium breakpoint.
-              It also demonstrates alignment and spacing properties.
+              The stack below changes from vertical to horizontal layout at the
+              medium breakpoint. It also demonstrates alignment and spacing
+              properties.
             </p>
 
             <Card className="mb-8">
               <CardHeader>
                 <CardTitle>Vertical to Horizontal Stack</CardTitle>
                 <CardDescription>
-                  This stack is vertical on mobile and small screens, but horizontal on medium screens and up.
+                  This stack is vertical on mobile and small screens, but
+                  horizontal on medium screens and up.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -165,7 +192,8 @@ export default function ResponsiveDemoPage() {
               <CardHeader>
                 <CardTitle>Horizontal to Vertical Stack</CardTitle>
                 <CardDescription>
-                  This stack is horizontal on mobile and small screens, but vertical on medium screens and up.
+                  This stack is horizontal on mobile and small screens, but
+                  vertical on medium screens and up.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -194,10 +222,12 @@ export default function ResponsiveDemoPage() {
         {/* Visibility Components Demo */}
         <section className="py-8 border-b">
           <ResponsiveContainer>
-            <h2 className="text-responsive-lg font-semibold mb-4">Visibility Components</h2>
+            <h2 className="text-responsive-lg font-semibold mb-4">
+              Visibility Components
+            </h2>
             <p className="mb-6">
-              These components show or hide content based on screen size.
-              Resize your browser window to see the effect.
+              These components show or hide content based on screen size. Resize
+              your browser window to see the effect.
             </p>
 
             <div className="space-y-8">
@@ -211,7 +241,9 @@ export default function ResponsiveDemoPage() {
                 <CardContent className="space-y-4">
                   <ShowOnMobile>
                     <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded">
-                      <p className="font-medium">This is only visible on mobile devices</p>
+                      <p className="font-medium">
+                        This is only visible on mobile devices
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         Using ShowOnMobile component
                       </p>
@@ -220,7 +252,9 @@ export default function ResponsiveDemoPage() {
 
                   <HideOnMobile>
                     <div className="bg-green-100 dark:bg-green-900 p-4 rounded">
-                      <p className="font-medium">This is hidden on mobile devices</p>
+                      <p className="font-medium">
+                        This is hidden on mobile devices
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         Using HideOnMobile component
                       </p>
@@ -229,7 +263,9 @@ export default function ResponsiveDemoPage() {
 
                   <ShowOnDesktop>
                     <div className="bg-purple-100 dark:bg-purple-900 p-4 rounded">
-                      <p className="font-medium">This is only visible on desktop devices</p>
+                      <p className="font-medium">
+                        This is only visible on desktop devices
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         Using ShowOnDesktop component
                       </p>
@@ -238,7 +274,9 @@ export default function ResponsiveDemoPage() {
 
                   <HideOnDesktop>
                     <div className="bg-amber-100 dark:bg-amber-900 p-4 rounded">
-                      <p className="font-medium">This is hidden on desktop devices</p>
+                      <p className="font-medium">
+                        This is hidden on desktop devices
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         Using HideOnDesktop component
                       </p>
@@ -251,33 +289,41 @@ export default function ResponsiveDemoPage() {
                 <CardHeader>
                   <CardTitle>Advanced Visibility with Breakpoints</CardTitle>
                   <CardDescription>
-                    More precise control with the Show component that accepts from/until props.
+                    More precise control with the Show component that accepts
+                    from/until props.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Show from="sm" until="lg">
                     <div className="bg-pink-100 dark:bg-pink-900 p-4 rounded">
-                      <p className="font-medium">This is only visible on tablets</p>
+                      <p className="font-medium">
+                        This is only visible on tablets
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Using Show component with from="sm" until="lg"
+                        Using Show component with from=&quot;sm&quot;
+                        until=&quot;lg&quot;
                       </p>
                     </div>
                   </Show>
 
                   <Show from="lg">
                     <div className="bg-cyan-100 dark:bg-cyan-900 p-4 rounded">
-                      <p className="font-medium">This is only visible on large screens</p>
+                      <p className="font-medium">
+                        This is only visible on large screens
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Using Show component with from="lg"
+                        Using Show component with from=&quot;lg&quot;
                       </p>
                     </div>
                   </Show>
 
                   <Show until="sm">
                     <div className="bg-orange-100 dark:bg-orange-900 p-4 rounded">
-                      <p className="font-medium">This is only visible on small mobile devices</p>
+                      <p className="font-medium">
+                        This is only visible on small mobile devices
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Using Show component with until="sm"
+                        Using Show component with until=&quot;sm&quot
                       </p>
                     </div>
                   </Show>
@@ -290,9 +336,12 @@ export default function ResponsiveDemoPage() {
         {/* Responsive CSS Utilities Demo */}
         <section className="py-8 border-b">
           <ResponsiveContainer>
-            <h2 className="text-responsive-lg font-semibold mb-4">Responsive CSS Utilities</h2>
+            <h2 className="text-responsive-lg font-semibold mb-4">
+              Responsive CSS Utilities
+            </h2>
             <p className="mb-6">
-              The system includes several CSS utility classes for responsive behavior.
+              The system includes several CSS utility classes for responsive
+              behavior.
             </p>
 
             <div className="space-y-8">
@@ -305,28 +354,37 @@ export default function ResponsiveDemoPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <h3 className="font-medium text-sm mb-2">Standard Text (16px)</h3>
+                    <h3 className="font-medium text-sm mb-2">
+                      Standard Text (16px)
+                    </h3>
                     <p className="p-2 bg-muted rounded">
-                      This is standard text that does not scale with viewport size.
+                      This is standard text that does not scale with viewport
+                      size.
                     </p>
                   </div>
-                  
+
                   <div>
-                    <h3 className="font-medium text-sm mb-2">text-responsive</h3>
+                    <h3 className="font-medium text-sm mb-2">
+                      text-responsive
+                    </h3>
                     <p className="text-responsive p-2 bg-muted rounded">
                       This text scales smoothly from small to large screens.
                     </p>
                   </div>
-                  
+
                   <div>
-                    <h3 className="font-medium text-sm mb-2">text-responsive-lg</h3>
+                    <h3 className="font-medium text-sm mb-2">
+                      text-responsive-lg
+                    </h3>
                     <p className="text-responsive-lg p-2 bg-muted rounded">
                       This is larger text that also scales with viewport.
                     </p>
                   </div>
-                  
+
                   <div>
-                    <h3 className="font-medium text-sm mb-2">text-responsive-xl</h3>
+                    <h3 className="font-medium text-sm mb-2">
+                      text-responsive-xl
+                    </h3>
                     <p className="text-responsive-xl p-2 bg-muted rounded">
                       This is heading text that scales dramatically.
                     </p>
@@ -344,20 +402,25 @@ export default function ResponsiveDemoPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Standard Button</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Standard Button
+                      </p>
                       <Button>Standard Size</Button>
                     </div>
-                    
+
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Touch-Target Button</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Touch-Target Button
+                      </p>
                       <Button className="touch-target">Touch-Friendly</Button>
                     </div>
-                    
+
                     <ShowOnMobile>
                       <div className="bg-muted p-4 rounded mt-6">
                         <p className="text-sm">
-                          On mobile devices, it's especially important to have large enough touch targets.
-                          The minimum recommended size is 44×44 pixels.
+                          On mobile devices, it&apos;s especially important to
+                          have large enough touch targets. The minimum
+                          recommended size is 44×44 pixels.
                         </p>
                       </div>
                     </ShowOnMobile>
@@ -375,16 +438,23 @@ export default function ResponsiveDemoPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Standard Padding (p-4)</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Standard Padding (p-4)
+                      </p>
                       <div className="p-4 bg-muted rounded border border-dashed">
                         <p>This content has a fixed padding of 1rem (16px).</p>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Responsive Padding (px-responsive py-responsive)</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Responsive Padding (px-responsive py-responsive)
+                      </p>
                       <div className="px-responsive py-responsive bg-muted rounded border border-dashed">
-                        <p>This content has padding that scales with the viewport size.</p>
+                        <p>
+                          This content has padding that scales with the viewport
+                          size.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -397,9 +467,12 @@ export default function ResponsiveDemoPage() {
         {/* Interactive Demo */}
         <section className="py-8">
           <ResponsiveContainer>
-            <h2 className="text-responsive-lg font-semibold mb-4">Interactive Example</h2>
+            <h2 className="text-responsive-lg font-semibold mb-4">
+              Interactive Example
+            </h2>
             <p className="mb-6">
-              This example shows a counter with different layouts based on screen size.
+              This example shows a counter with different layouts based on
+              screen size.
             </p>
 
             <Card>
@@ -414,7 +487,7 @@ export default function ResponsiveDemoPage() {
                   <div className="text-center p-4">
                     <div className="text-4xl font-bold mb-4">{count}</div>
                     <div className="flex justify-center space-x-2">
-                      <Button 
+                      <Button
                         onClick={() => setCount(count - 1)}
                         className="touch-target"
                         variant="outline"
@@ -439,26 +512,23 @@ export default function ResponsiveDemoPage() {
                     justify="between"
                     className="p-4"
                   >
-                    <Button 
-                      onClick={() => setCount(count - 1)} 
+                    <Button
+                      onClick={() => setCount(count - 1)}
                       size="lg"
                       variant="outline"
                     >
                       Decrease
                     </Button>
                     <div className="text-6xl font-bold">{count}</div>
-                    <Button 
-                      onClick={() => setCount(count + 1)}
-                      size="lg"
-                    >
+                    <Button onClick={() => setCount(count + 1)} size="lg">
                       Increase
                     </Button>
                   </ResponsiveStack>
                 </HideOnMobile>
               </CardContent>
               <CardFooter className="flex justify-center">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onClick={() => setCount(0)}
                   className={isMobile ? "touch-target" : ""}
                 >

@@ -111,7 +111,9 @@ export function Header() {
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold">M</span>
               </div>
-              <span className="font-bold text-lg hidden sm:inline-block">M-Yallow</span>
+              <span className="font-bold text-lg hidden sm:inline-block">
+                M-Yallow
+              </span>
             </Link>
           </div>
 
@@ -122,7 +124,9 @@ export function Header() {
                 {navItems.map((item) => {
                   return item.children ? (
                     <NavigationMenuItem key={item.title}>
-                      <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
+                      <NavigationMenuTrigger>
+                        {item.title}
+                      </NavigationMenuTrigger>
                       <NavigationMenuContent>
                         <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                           {item.children.map((child) => (
@@ -149,11 +153,9 @@ export function Header() {
                     </NavigationMenuItem>
                   ) : (
                     <NavigationMenuItem key={item.title}>
-                      <Link href={item.href} legacyBehavior passHref>
-                        <NavigationMenuLink>
-                          {item.title}
-                        </NavigationMenuLink>
-                      </Link>
+                      <NavigationMenuLink asChild>
+                        <Link href={item.href}>{item.title}</Link>
+                      </NavigationMenuLink>
                     </NavigationMenuItem>
                   );
                 })}
@@ -167,9 +169,9 @@ export function Header() {
             {isLoggedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className={cn(
                       "rounded-full h-8 w-8 bg-muted",
                       isMobile && "touch-target"
@@ -182,7 +184,9 @@ export function Header() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>Profile</DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuItem onClick={toggleAuth}>Logout</DropdownMenuItem>
+                  <DropdownMenuItem onClick={toggleAuth}>
+                    Logout
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -227,7 +231,10 @@ export function Header() {
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <ShowOnMobile>
-          <div id="mobile-navigation" className="flex flex-col space-y-3 px-4 py-6 bg-background border-t">
+          <div
+            id="mobile-navigation"
+            className="flex flex-col space-y-3 px-4 py-6 bg-background border-t"
+          >
             {navItems.map((item) => (
               <div key={item.title}>
                 {item.children ? (
@@ -260,18 +267,18 @@ export function Header() {
             {!isLoggedIn && (
               <div className="pt-4 mt-4 border-t">
                 <ResponsiveStack direction="horizontal" spacing="2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={toggleAuth} 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleAuth}
                     className="w-full touch-target"
                   >
                     Login
                   </Button>
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    onClick={toggleAuth} 
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={toggleAuth}
                     className="w-full touch-target"
                   >
                     Sign Up
