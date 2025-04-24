@@ -20,6 +20,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useDeviceCategory } from "@/hooks/use-breakpoint";
+import {
+  ResponsiveContainer,
+  ResponsiveStack,
+  ShowOnMobile,
+  HideOnMobile,
+} from "@/components/ui/responsive";
 
 type NavItem = {
   title: string;
@@ -54,6 +61,11 @@ const navItems: NavItem[] = [
         href: "/components",
         description: "View all available UI components",
       },
+      {
+        title: "Responsive Demo",
+        href: "/responsive-demo",
+        description: "Explore the responsive design system",
+      },
     ],
   },
   {
@@ -77,6 +89,7 @@ const navItems: NavItem[] = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Placeholder for auth state
+  const { isMobile } = useDeviceCategory();
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {
@@ -89,116 +102,139 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <div className="flex items-center">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">M</span>
-            </div>
-            <span className="font-bold text-lg hidden sm:inline-block">M-Yallow</span>
-          </Link>
-        </div>
+    <header className="sticky top-0 z-[100] w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      <ResponsiveContainer className="overflow-visible">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold">M</span>
+              </div>
+              <span className="font-bold text-lg hidden sm:inline-block">
+                M-Yallow
+              </span>
+            </Link>
+          </div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-1">
-          <NavigationMenu>
-            <NavigationMenuList>
-              {navItems.map((item) => {
-                return item.children ? (
-                  <NavigationMenuItem key={item.title}>
-                    <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                        {item.children.map((child) => (
-                          <li key={child.title}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={child.href}
-                                className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                              >
-                                <div className="text-sm font-medium leading-none">
-                                  {child.title}
-                                </div>
-                                {child.description && (
-                                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                    {child.description}
-                                  </p>
-                                )}
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        ))}
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                ) : (
-                  <NavigationMenuItem key={item.title}>
-                    <Link href={item.href} legacyBehavior passHref>
-                      <NavigationMenuLink>
+          {/* Desktop Navigation */}
+          <HideOnMobile>
+            <NavigationMenu className="z-[101]">
+              <NavigationMenuList>
+                {navItems.map((item) => {
+                  return item.children ? (
+                    <NavigationMenuItem key={item.title}>
+                      <NavigationMenuTrigger>
                         {item.title}
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                          {item.children.map((child) => (
+                            <li key={child.title}>
+                              <NavigationMenuLink asChild>
+                                <Link
+                                  href={child.href}
+                                  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                >
+                                  <div className="text-sm font-medium leading-none">
+                                    {child.title}
+                                  </div>
+                                  {child.description && (
+                                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                      {child.description}
+                                    </p>
+                                  )}
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  ) : (
+                    <NavigationMenuItem key={item.title}>
+                      <NavigationMenuLink asChild>
+                        <Link href={item.href}>{item.title}</Link>
                       </NavigationMenuLink>
-                    </Link>
-                  </NavigationMenuItem>
-                );
-              })}
-            </NavigationMenuList>
-          </NavigationMenu>
-        </div>
+                    </NavigationMenuItem>
+                  );
+                })}
+              </NavigationMenuList>
+            </NavigationMenu>
+          </HideOnMobile>
 
-        {/* User Controls and Theme Toggle */}
-        <div className="flex items-center space-x-2">
-          {/* Auth Controls */}
-          {isLoggedIn ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 bg-muted">
-                  <User className="h-4 w-4" />
-                  <span className="sr-only">User menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem onClick={toggleAuth}>Logout</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <div className="hidden sm:flex space-x-2">
-              <Button variant="ghost" size="sm" onClick={toggleAuth}>
-                Login
-              </Button>
-              <Button variant="default" size="sm" onClick={toggleAuth}>
-                Sign Up
-              </Button>
-            </div>
-          )}
-
-          {/* Theme Toggle */}
-          <ThemeToggle />
-
-          {/* Mobile Menu Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-2 md:hidden"
-            onClick={toggleMobileMenu}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
+          {/* User Controls and Theme Toggle */}
+          <ResponsiveStack direction="horizontal" spacing="2" align="center">
+            {/* Auth Controls */}
+            {isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "rounded-full h-8 w-8 bg-muted",
+                      isMobile && "touch-target"
+                    )}
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="sr-only">User menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                  <DropdownMenuItem>Settings</DropdownMenuItem>
+                  <DropdownMenuItem onClick={toggleAuth}>
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <Menu className="h-5 w-5" />
+              <HideOnMobile>
+                <ResponsiveStack direction="horizontal" spacing="2">
+                  <Button variant="ghost" size="sm" onClick={toggleAuth}>
+                    Login
+                  </Button>
+                  <Button variant="default" size="sm" onClick={toggleAuth}>
+                    Sign Up
+                  </Button>
+                </ResponsiveStack>
+              </HideOnMobile>
             )}
-            <span className="sr-only">Toggle menu</span>
-          </Button>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
+            {/* Mobile Menu Toggle */}
+            <ShowOnMobile>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="touch-target"
+                aria-label="Main menu"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-navigation"
+                onClick={toggleMobileMenu}
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </ShowOnMobile>
+          </ResponsiveStack>
         </div>
-      </div>
+      </ResponsiveContainer>
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden">
-          <div className="flex flex-col space-y-3 px-4 py-6 bg-background border-t">
+        <ShowOnMobile>
+          <div
+            id="mobile-navigation"
+            className="flex flex-col space-y-3 px-4 py-6 bg-background border-t"
+          >
             {navItems.map((item) => (
               <div key={item.title}>
                 {item.children ? (
@@ -209,7 +245,7 @@ export function Header() {
                         <Link
                           key={child.title}
                           href={child.href}
-                          className="block text-sm text-muted-foreground hover:text-foreground"
+                          className="block text-sm text-muted-foreground hover:text-foreground touch-target py-2"
                           onClick={toggleMobileMenu}
                         >
                           {child.title}
@@ -220,7 +256,7 @@ export function Header() {
                 ) : (
                   <Link
                     href={item.href}
-                    className="block font-medium hover:text-primary"
+                    className="block font-medium hover:text-primary touch-target py-2"
                     onClick={toggleMobileMenu}
                   >
                     {item.title}
@@ -229,17 +265,29 @@ export function Header() {
               </div>
             ))}
             {!isLoggedIn && (
-              <div className="pt-4 mt-4 border-t flex space-x-2">
-                <Button variant="outline" size="sm" onClick={toggleAuth} className="w-full">
-                  Login
-                </Button>
-                <Button variant="default" size="sm" onClick={toggleAuth} className="w-full">
-                  Sign Up
-                </Button>
+              <div className="pt-4 mt-4 border-t">
+                <ResponsiveStack direction="horizontal" spacing="2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleAuth}
+                    className="w-full touch-target"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={toggleAuth}
+                    className="w-full touch-target"
+                  >
+                    Sign Up
+                  </Button>
+                </ResponsiveStack>
               </div>
             )}
           </div>
-        </div>
+        </ShowOnMobile>
       )}
     </header>
   );
