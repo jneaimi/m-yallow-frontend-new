@@ -254,6 +254,6 @@
   
   /* Skip link destination styling */
   [id="main-content"]:focus {
-    @apply outline-none;
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 }

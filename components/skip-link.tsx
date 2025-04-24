@@ -20,14 +20,14 @@ export function SkipLink({
   targetId?: string;
   className?: string;
 }) {
-  const defaultProps = getSkipLinkProps(targetId);
+  const { href, className: defaultClassName, children } = getSkipLinkProps(targetId);
   
   return (
     <a
-      href={`#${targetId}`}
-      className={`sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:p-4 focus:bg-background focus:text-foreground focus:outline-none focus:ring focus:rounded-md ${className}`}
+      href={href}
+      className={`${defaultClassName} focus:rounded-md ${className}`}
     >
-      Skip to main content
+      {children}
     </a>
   );
 }

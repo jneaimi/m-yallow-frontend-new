@@ -104,19 +104,47 @@ export default function AccessibilityTestPage() {
     // Log to console for debugging
     console.log("Color Contrast Audit:", report);
     
-    // Show the report
+    // Show the report via toast
     toast.info("Color contrast audit completed. See console for details.");
     
-    // Create a more detailed report
-    let message = "### Color Contrast Report\n\n";
-    Object.entries(report).forEach(([name, data]) => {
-      message += `**${name}**: ${data.ratio.toFixed(2)}:1 - `;
-      message += data.passesAA ? "✅ Passes AA" : "❌ Fails AA";
-      message += "\n";
+    toast.message("Color contrast audit", {
+      description: diagnosticOutput,
+      duration: 10000,
     });
     
-    // Show detailed report in alert
-    alert(message);
+    // Display the formatted diagnostic output
+    toast.message("Contrast Diagnostic", {
+      description: "Detailed contrast ratio analysis",
+      action: {
+        label: "View Report",
+        onClick: () => {
+          // Create a dialog to show the detailed diagnostics
+          const dialog = document.createElement('dialog');
+          dialog.className = 'p-6 max-w-3xl rounded-lg shadow-lg';
+          
+          // Create the content
+          const content = document.createElement('div');
+          content.innerHTML = `
+            <h2 class="text-xl font-bold mb-4">Color Contrast Diagnostic Report</h2>
+            <pre class="whitespace-pre-wrap text-sm bg-muted p-4 rounded overflow-auto max-h-96">${diagnosticOutput}</pre>
+            <div class="mt-4 flex justify-end">
+              <button class="px-4 py-2 bg-primary text-primary-foreground rounded">Close</button>
+            </div>
+          `;
+          
+          // Add close button functionality
+          const closeButton = content.querySelector('button');
+          closeButton?.addEventListener('click', () => {
+            dialog.close();
+            document.body.removeChild(dialog);
+          });
+          
+          dialog.appendChild(content);
+          document.body.appendChild(dialog);
+          dialog.showModal();
+        }
+      }
+    });
   };
 
   return (
@@ -338,7 +366,7 @@ export default function AccessibilityTestPage() {
               <DialogTrigger asChild>
                 <Button>Open Dialog</Button>
               </DialogTrigger>
-              <DialogContent aria-labelledby="dialog-title" aria-describedby="dialog-description">
+              <DialogContent>
                 <DialogHeader>
                   <DialogTitle id="dialog-title">Accessible Dialog</DialogTitle>
                   <DialogDescription id="dialog-description">

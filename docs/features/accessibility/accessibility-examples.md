@@ -200,15 +200,84 @@ function Layout({ children }) {
 }
 ```
 
-### Modal Dialog with Focus Trap
+### Modal Dialog with Focus Trap and Required Title
+
+All dialogs must have a title to be accessible to screen readers. The title can be visually hidden if needed, but it must be present in the DOM.
 
 ```tsx
-function AccessibleDialog({ isOpen, onClose, title, children }) {
+import { useFocusTrap } from "@/lib/accessibility/keyboard-navigation";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogFooter, 
+  VisuallyHidden 
+} from "@/components/ui/dialog";
+
+// GOOD: Dialog with visible title
+function AccessibleDialogWithTitle({ isOpen, onOpenChange, children }) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Dialog Title</DialogTitle>
+          <DialogDescription>
+            This is a description of the dialog.
+          </DialogDescription>
+        </DialogHeader>
+        {children}
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// GOOD: Dialog with visually hidden title (still accessible to screen readers)
+function AccessibleDialogWithHiddenTitle({ isOpen, onOpenChange, children }) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader className="sr-only">
+          <DialogTitle>Dialog Title</DialogTitle>
+        </DialogHeader>
+        {children}
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// GOOD: Alternative approach with VisuallyHidden component
+function AccessibleDialogWithVisuallyHiddenTitle({ isOpen, onOpenChange, children }) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <VisuallyHidden>
+          <DialogTitle>Dialog Title</DialogTitle>
+        </VisuallyHidden>
+        {children}
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// GOOD: Custom dialog using useFocusTrap directly
+function CustomAccessibleDialog({ isOpen, onClose, title, children }) {
+  // Use focus trap hook from our utilities
   const dialogRef = useFocusTrap(isOpen);
   
+  // Save the active element to restore focus later
   useEffect(() => {
     if (isOpen) {
-      // Save the active element to restore focus later
       const activeElement = document.activeElement;
       
       // Clean up function
@@ -224,25 +293,41 @@ function AccessibleDialog({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
   
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
       <div 
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
-        onClick={e => e.stopPropagation()}
         className="bg-background p-6 rounded-lg shadow-lg"
       >
-        <h2 id="dialog-title">{title}</h2>
-        {children}
+        <h2 id="dialog-title" className="text-lg font-semibold">{title}</h2>
+        <div className="my-4">{children}</div>
         <div className="mt-4 flex justify-end">
-          <button onClick={onClose}>Close</button>
+          <button 
+            onClick={onClose}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
+  );
+}
+
+// BAD: Dialog without title - will cause accessibility errors
+function InaccessibleDialog({ isOpen, onOpenChange, children }) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        {/* Missing DialogTitle will cause accessibility issues */}
+        {children}
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 ```
@@ -314,6 +399,24 @@ function AccessibleTabs({ tabs }) {
 ```
 
 ## Screen Reader Compatibility Examples
+
+### Avoiding Alert Dialogs
+
+```tsx
+// BAD: Using native alert() blocks UI and traps focus unpredictably
+function showAuditReport() {
+  // Show detailed report in alert
+  alert(message);
+}
+
+// GOOD: Using toast notifications with proper duration
+function showAuditReport() {
+  toast.message("Color contrast audit", {
+    description: message,
+    duration: 10000,
+  });
+}
+```
 
 ### Live Region for Dynamic Content
 

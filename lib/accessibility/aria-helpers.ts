@@ -5,6 +5,13 @@
  * to ensure consistent implementation across components.
  */
 
+import type { ReactNode } from 'react';
+
+/**
+ * Type for ARIA attributes that can be string, boolean, or number
+ */
+export type AriaProps = Record<string, string | boolean | number>;
+
 /**
  * Get appropriate ARIA attributes for icon-only buttons
  * 
@@ -15,7 +22,7 @@
 export function getIconButtonProps(
   hasVisibleText: boolean, 
   ariaLabel?: string
-): Record<string, string> {
+): AriaProps {
   if (!hasVisibleText && ariaLabel) {
     return { 'aria-label': ariaLabel };
   }
@@ -37,7 +44,7 @@ export function getIconButtonProps(
 export function getToggleProps(
   isPressed: boolean,
   ariaLabel?: string
-): Record<string, string | boolean> {
+): AriaProps {
   return {
     'aria-pressed': isPressed,
     ...(ariaLabel ? { 'aria-label': ariaLabel } : {})
@@ -56,7 +63,7 @@ export function getExpandableProps(
   isExpanded: boolean,
   controlsId?: string,
   popupType: 'menu' | 'dialog' | 'listbox' | 'tree' | 'grid' = 'menu'
-): Record<string, string | boolean> {
+): AriaProps {
   return {
     'aria-expanded': isExpanded,
     'aria-haspopup': popupType,
@@ -78,7 +85,7 @@ export function getFormFieldProps(
   isRequired: boolean = false,
   isInvalid: boolean = false,
   errorId?: string
-): Record<string, string | boolean> {
+): AriaProps {
   return {
     id,
     'aria-required': isRequired,
@@ -99,7 +106,7 @@ export function getTabProps(
   isSelected: boolean,
   controlsId: string,
   labelledBy?: string
-): Record<string, string | boolean> {
+): AriaProps {
   return {
     role: 'tab',
     'aria-selected': isSelected,
@@ -121,7 +128,7 @@ export function getTabPanelProps(
   id: string,
   labelledBy: string,
   hidden: boolean = false
-): Record<string, string | boolean> {
+): AriaProps {
   return {
     id,
     role: 'tabpanel',
@@ -143,7 +150,7 @@ export function getDialogProps(
   labelledBy?: string,
   describedBy?: string,
   isModal: boolean = true
-): Record<string, string | boolean> {
+): AriaProps {
   return {
     role: 'dialog',
     'aria-modal': isModal,
@@ -162,7 +169,7 @@ export function getDialogProps(
 export function getNavItemProps(
   isCurrent: boolean,
   currentValue: 'page' | 'step' | 'location' | 'date' | 'time' = 'page'
-): Record<string, string | boolean> {
+): AriaProps {
   if (!isCurrent) return {};
   
   return {
@@ -176,7 +183,7 @@ export function getNavItemProps(
  * @param children React children to check
  * @returns Boolean indicating if there is visible text
  */
-export function hasVisibleText(children: React.ReactNode): boolean {
+export function hasVisibleText(children: ReactNode): boolean {
   // Simple check for string children
   if (typeof children === 'string' && children.trim() !== '') {
     return true;

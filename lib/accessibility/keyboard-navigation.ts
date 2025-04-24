@@ -5,7 +5,7 @@
  * keyboard navigation in interactive components.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 /**
  * Keys commonly used for keyboard navigation
@@ -142,7 +142,7 @@ export function useArrowNavigation<T>(
     getItemId,
   } = options;
   
-  const [activeIndex, setActiveIndex] = useRef<number>(initialIndex).current;
+  const [activeIndex, setActiveIndex] = useState<number>(initialIndex);
   
   // Update active index
   const setActive = useCallback((index: number) => {

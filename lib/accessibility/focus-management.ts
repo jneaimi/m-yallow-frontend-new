@@ -114,7 +114,14 @@ export function useFocusVisibility() {
   useEffect(() => {
     // Only add the style once on mount
     if (typeof document !== 'undefined') {
+      // Check if the style already exists
+      const existingStyle = document.getElementById('focus-visibility-style');
+      if (existingStyle) {
+        return () => {}; // Style already exists, no need to add or clean up
+      }
+      
       const styleElement = document.createElement('style');
+      styleElement.id = 'focus-visibility-style';
       styleElement.innerHTML = `
         /* Only show focus styles when navigating with keyboard */
         .js-focus-visible :focus:not(.focus-visible) {
@@ -124,7 +131,9 @@ export function useFocusVisibility() {
       document.head.appendChild(styleElement);
       
       return () => {
-        document.head.removeChild(styleElement);
+        if (document.head.contains(styleElement)) {
+          document.head.removeChild(styleElement);
+        }
       };
     }
   }, []);

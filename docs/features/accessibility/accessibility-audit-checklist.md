@@ -57,6 +57,16 @@ For each component, verify the following:
 
 ## Component-Specific Checklists
 
+### Notifications and Alerts
+
+- [ ] Uses toast notifications instead of native `alert()` dialogs
+- [ ] Provides adequate time for users to read content (longer durations for detailed content)
+- [ ] Uses appropriate ARIA live regions for dynamic announcements
+- [ ] Error notifications have distinguishable styles (color, icon, etc.)
+- [ ] Can be dismissed manually when needed
+- [ ] Does not block user interaction with the page
+- [ ] Text content is clear and concise
+
 ### Buttons
 
 - [ ] Has accessible name (text content or `aria-label`)
@@ -88,6 +98,7 @@ For each component, verify the following:
 ### Modals and Dialogs
 
 - [ ] Has `role="dialog"` and `aria-modal="true"`
+- [ ] Has a DialogTitle component (even if visually hidden)
 - [ ] Has an accessible name via `aria-labelledby` or `aria-label`
 - [ ] Focus is trapped within the dialog when open
 - [ ] Focus returns to trigger element when closed

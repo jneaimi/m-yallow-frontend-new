@@ -271,15 +271,25 @@ export function getThemeColors(): Record<string, string> {
  * 
  * @returns Report on contrast compliance
  */
-export function auditThemeContrast(): Record<string, {
+/**
+ * Report structure for WCAG contrast compliance
+ */
+export type WCAGReport = {
   ratio: number;
   passesAA: boolean;
   passesAAA: boolean;
   foreground: string;
   background: string;
-}> {
+};
+
+/**
+ * Check if theme colors meet WCAG AA contrast requirements
+ * 
+ * @returns Report on contrast compliance
+ */
+export function auditThemeContrast(): Record<string, WCAGReport> {
   const colors = getThemeColors();
-  const report: Record<string, any> = {};
+  const report: Record<string, WCAGReport> = {};
   
   // Text on background
   if (colors.foreground && colors.background) {
