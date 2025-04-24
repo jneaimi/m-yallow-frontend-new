@@ -73,13 +73,13 @@ const navItems: NavItem[] = [
     href: "#",
     children: [
       {
-        title: "Documentation",
-        href: "/docs",
-        description: "Learn how to use the system",
+        title: "Accessibility",
+        href: "/accessibility-test",
+        description: "Test page for accessibility",
       },
       {
-        title: "API Reference",
-        href: "/api-reference",
+        title: "Theme",
+        href: "/theme-demo",
         description: "API endpoints and usage",
       },
     ],
@@ -174,7 +174,7 @@ export function Header() {
                     size="icon"
                     className={cn(
                       "rounded-full h-8 w-8 bg-muted",
-                      isMobile && "touch-target"
+                      isMobile && "touch-target",
                     )}
                   >
                     <User className="h-4 w-4" />

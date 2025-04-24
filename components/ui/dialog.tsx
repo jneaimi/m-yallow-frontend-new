@@ -51,6 +51,25 @@ function DialogContent({
   children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
+  // Check if there's a DialogTitle component within the children
+  const hasDialogTitle = React.Children.toArray(children).some(
+    child => React.isValidElement(child) && 
+      (child.type === DialogHeader || 
+       (React.isValidElement(child.props.children) && 
+        child.props.children.type === DialogTitle))
+  );
+
+  // Console warning if no DialogTitle is found
+  React.useEffect(() => {
+    if (!hasDialogTitle) {
+      console.warn(
+        'DialogContent requires a DialogTitle for the component to be accessible for screen reader users. ' +
+        'If you want to hide the DialogTitle, you can wrap it with our VisuallyHidden component. ' +
+        'For more information, see https://radix-ui.com/primitives/docs/components/dialog'
+      );
+    }
+  }, [hasDialogTitle]);
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -121,6 +140,8 @@ function DialogDescription({
   )
 }
 
+import { VisuallyHidden } from "@/components/ui/visually-hidden"
+
 export {
   Dialog,
   DialogClose,
@@ -132,4 +153,5 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  VisuallyHidden,
 }
