@@ -258,11 +258,6 @@ const publicRoutes = [
   "/theme-demo(.*)",
 ];
 
-// Routes to be ignored by the middleware completely
-const ignoredRoutes = [
-  "/api/webhooks(.*)", // Clerk webhook routes should be ignored
-];
-
 export default clerkMiddleware(async (auth, req) => {
   // Protect all routes except the public ones
   if (
@@ -283,11 +278,10 @@ export const config = {
 This middleware configuration:
 
 1. Defines public routes that don't require authentication
-2. Specifies routes to be ignored by the middleware completely
-3. Uses `clerkMiddleware` with a callback function that:
+2. Uses `clerkMiddleware` with a callback function that:
    - Checks if the current route matches any public route pattern
    - If not, protects the route using `auth.protect()`
-4. Configures the matcher to apply middleware to all relevant routes
+3. Configures the matcher to apply middleware to all relevant routes
 
 With this setup, routes like the homepage, sign-in, and sign-up pages are publicly accessible, while all other routes require authentication.
 
