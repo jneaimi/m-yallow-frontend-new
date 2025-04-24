@@ -35,10 +35,10 @@ export function notifyError(message: string, options?: NotificationOptions) {
  * @param options - Additional toast options
  */
 export function notifyWarning(message: string, options?: NotificationOptions) {
-  return toast(message, { 
-    className: 'warning',
+  // Use Sonner's built-in warning toast
+  return toast.warning(message, {
     duration: 4000,
-    ...options
+    ...options,
   });
 }
 

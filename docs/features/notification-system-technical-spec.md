@@ -113,6 +113,9 @@ interface NotificationOptions {
     onClick: () => void;
   };
   
+  // ARIA label for screen readers
+  ariaLabel?: string;
+  
   // Positioning
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center';
   
@@ -142,9 +145,10 @@ import { Toaster } from "@/components/ui/sonner";
 ## Notification Behavior
 
 - Notifications stack from the top-right corner by default
-- Each notification has a different default duration based on its type:
+- The global default duration for all notifications is 5000ms (set in the Toaster component)
+- Type-specific durations are applied in the utility functions:
   - Success: 3000ms (shorter as they're less critical)
-  - Error: 5000ms (longer to ensure users see the error)
+  - Error: 5000ms (uses the global default)
   - Warning: 4000ms
   - Info: 4000ms
 - All notifications are dismissible via a close button
