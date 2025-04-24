@@ -8,11 +8,11 @@ export default function SignUpLayout({
   return (
     <>
       {/* Skip link target */}
-      <div id="auth-content" tabIndex={-1} className="outline-none">
+      <main id="auth-content" tabIndex={-1}>
         {/* Authentication-specific live region for announcements */}
         <LiveRegion id="auth-form-announcer" politeness="assertive" />
         {children}
-      </div>
+      </main>
     </>
   );
 }

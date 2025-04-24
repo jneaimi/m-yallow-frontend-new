@@ -22,7 +22,7 @@ export default function ProfilePage() {
             appearance={{
               elements: {
                 rootBox: "w-full",
-                card: "shadow-none w-full p-0",
+                card: "shadow-none w-full p-0 bg-transparent",
                 navbar: "bg-background border-border",
                 navbarButton: "text-foreground",
                 navbarButtonActive: "text-primary border-primary",
@@ -39,9 +39,7 @@ export default function ProfilePage() {
                 userButtonPopoverActionButtonIcon: "text-foreground",
                 userButtonPopoverActionButtonText: "text-foreground",
                 userButtonPopoverFooter: "bg-background border-t border-border",
-                card: "bg-transparent",
                 page: "p-0",
-                pageScrollBox: "p-0",
                 profileSectionTitle: "text-foreground",
                 profileSectionTitleText: "text-foreground font-semibold",
                 profileSectionContent: "bg-transparent",
