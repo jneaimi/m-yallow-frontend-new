@@ -13,7 +13,7 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 
 export function ThemeToggle() {
-  const { setTheme, resolvedTheme } = useTheme();
+  const { setTheme } = useTheme();
 
   return (
     <DropdownMenu>
