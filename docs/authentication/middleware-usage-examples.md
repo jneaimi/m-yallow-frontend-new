@@ -138,13 +138,18 @@ export async function GET(req: NextRequest) {
 }
 
 async function fetchUserData(userId: string) {
-  // Implementation of fetching user data
-  return {
-    id: userId,
-    name: 'John Doe',
-    email: 'john@example.com',
-    // Other user data
-  };
+  try {
+    // Implementation of fetching user data
+    return {
+      id: userId,
+      name: 'John Doe',
+      email: 'john@example.com',
+      // Other user data
+    };
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    throw new Error('Failed to retrieve user data');
+  }
 }
 ```
 
@@ -223,6 +228,8 @@ When creating new routes in your application, they will be protected by default 
 ```tsx
 // app/dashboard/page.tsx
 import { getUserData } from '@/lib/auth/server';
+
+> **Implementation:** see [`getUserData`](../../../lib/auth/server.ts#L42) for full definition.
 
 export default async function DashboardPage() {
   // This will be protected by the middleware
@@ -364,10 +371,7 @@ export function SignOutButton() {
       await signOut();
       
       // Announce sign out to screen readers
-      const announcer = document.getElementById('auth-state-announcer');
-      if (announcer) {
-        announcer.textContent = 'You have been signed out successfully.';
-      }
+      announceAuthRedirect('You have been signed out successfully.', 'polite');
     } catch (error) {
       console.error('Sign out failed', error);
     } finally {
