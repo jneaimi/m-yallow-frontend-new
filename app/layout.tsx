@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
+import { SkipLink } from "@/components/skip-link";
+import { LiveRegion } from "@/components/a11y/live-region";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,11 +53,24 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Toaster />
+          {/* Screen reader announcements live region */}
+          <LiveRegion id="a11y-announcer" politeness="polite" />
+          
+          {/* Skip link for keyboard users */}
+          <SkipLink />
+          
+          {/* Accessible toast notifications */}
+          <Toaster toastOptions={{ role: 'status', ariaLive: 'polite' }} />
+          
+          {/* Header with landmark role */}
           <Header />
-          <main className="flex-1">
+          
+          {/* Main content with id for skip link target */}
+          <main id="main-content" className="flex-1" tabIndex={-1}>
             {children}
           </main>
+          
+          {/* Footer with landmark role */}
           <Footer />
         </ThemeProvider>
       </body>

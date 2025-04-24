@@ -12,6 +12,16 @@ This document provides an overview of the features implemented in the M-Yallow f
   - [Theme System Guide](./theme-system.md)
   - [Technical Specification](./theme-system-technical-spec.md)
   - [Usage Examples](./theme-system-examples.md)
+  
+### 2. Accessibility Compliance
+- **FR-01.2.9: Accessibility Compliance**
+- **Purpose:** Ensure the UI system meets accessibility standards
+- **Status:** In Progress 🔄
+- **Documentation:**
+  - [Accessibility Guide](./accessibility.md)
+  - [Technical Specification](./accessibility/accessibility-technical-spec.md)
+  - [Implementation Examples](./accessibility/accessibility-examples.md)
+  - [Audit Checklist](./accessibility/accessibility-audit-checklist.md)
 
 The theme system allows users to switch between light and dark themes with preferences stored in local storage. It also detects and respects the user's system preferences as a fallback and ensures there's no flash of incorrect theme on initial load.
 
