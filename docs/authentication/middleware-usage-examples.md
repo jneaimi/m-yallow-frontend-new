@@ -359,6 +359,7 @@ export function SignInForm() {
 
 import { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { announceAuthRedirect } from '@/lib/accessibility/auth-redirects';
 
 export function SignOutButton() {
   const { signOut } = useAuth();
