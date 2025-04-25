@@ -1,6 +1,16 @@
 import { auth } from '@clerk/nextjs/server';
 
-export async function getAuthToken() {
+/**
+ * Retrieves the current user's authentication token for use in API requests.
+ * @returns {Promise<string | null>} The authentication token or null if not available.
+ * @throws {Error} If there's an issue retrieving the token.
+ */
+export async function getAuthToken(): Promise<string | null> {
   const { getToken } = auth();
-  return await getToken();
+  try {
+    return await getToken();
+  } catch (error) {
+    console.error('Failed to retrieve auth token:', error);
+    throw error;
+  }
 }
