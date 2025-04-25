@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { SearchBar } from "@/components/providers/search-bar";
 import { ProviderCard } from "@/components/providers/provider-card";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/ui/responsive";
@@ -14,6 +13,10 @@ import {
   PaginationEllipsis
 } from "@/components/ui/pagination";
 
+/**
+ * Props for the List page component
+ * @property searchParams - In Next.js 14/15, searchParams is a Promise that must be awaited
+ */
 interface ListPageProps {
   searchParams: Promise<{ page?: string; pageSize?: string }>;
 }
