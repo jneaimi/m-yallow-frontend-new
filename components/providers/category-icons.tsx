@@ -33,7 +33,7 @@ export const featuredCategories = [
   {
     id: "services",
     name: "Home Services",
-    icon: categoryIcons.home,
+    icon: categoryIcons.services,
     description: "Maintenance, repair, and improvement services"
   },
   {

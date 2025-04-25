@@ -5,7 +5,7 @@ import { ResponsiveContainer, ResponsiveGrid } from "@/components/ui/responsive"
 import { getProviderHeroImageUrl } from "@/lib/image-utils";
 
 interface SearchPageProps {
-  searchParams: { q?: string; category?: string };
+  searchParams: Promise<{ q?: string; category?: string }>;
 }
 
 async function searchProviders(query: string, category?: string) {
@@ -24,8 +24,20 @@ async function searchProviders(query: string, category?: string) {
     }
     
     const data = await res.json();
+    
+    // Define the API provider structure
+    interface ApiProvider {
+      id: number;
+      name: string;
+      contact?: string;
+      location?: string;
+      about?: string;
+      hero_image_url?: string;
+      created_at?: string;
+    }
+    
     // Map snake_case API fields to camelCase for the client component
-    return (data.providers || []).map((provider: any) => ({
+    return (data.providers || []).map((provider: ApiProvider) => ({
       id: provider.id,
       name: provider.name,
       contact: provider.contact,
@@ -95,9 +107,12 @@ async function SearchResults({ query, category }: { query?: string; category?: s
   );
 }
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.q || "";
-  const category = searchParams.category;
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  // Need to await searchParams in Next.js 14+
+  const params = await searchParams;
+  
+  const query = params.q || "";
+  const category = params.category;
   
   const title = category 
     ? `${category.charAt(0).toUpperCase() + category.slice(1)} Providers`

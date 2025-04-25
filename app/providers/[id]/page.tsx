@@ -1,9 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ResponsiveContainer } from "@/components/ui/responsive";
-import { Button } from "@/components/ui/button";
-import { getProviderHeroImageUrl, getFallbackImageUrl } from "@/lib/image-utils";
+import { getProviderHeroImageUrl } from "@/lib/image-utils";
 
 interface ProviderPageProps {
   params: { id: string };
@@ -39,7 +35,7 @@ async function getProvider(id: string) {
   
   // Fallback to mock data if API call fails
   const providerId = parseInt(id);
-  if (providerId < 1 || providerId > 6) return null;
+  if (providerId < 1 || providerId > 2) return null;
   
   // Mock data for fallback
   const mockProviders = [
@@ -68,8 +64,7 @@ async function getProvider(id: string) {
 }
 
 export default async function ProviderPage({ params }: ProviderPageProps) {
-  const awaitedParams = await params;
-  const provider = await getProvider(awaitedParams.id);
+  const provider = await getProvider(params.id);
 
   if (!provider) {
     notFound();

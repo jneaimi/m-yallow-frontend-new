@@ -1,9 +1,11 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { RecentProviders } from "./providers/recent-providers";
 import { SearchBar } from "@/components/providers/search-bar";
 import { FeaturedCategories } from "@/components/providers/featured-categories";
 import { featuredCategories } from "@/components/providers/category-icons";
 import { ResponsiveContainer, ResponsiveStack } from "@/components/ui/responsive";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -39,9 +41,9 @@ export default function Home() {
         <ResponsiveContainer maxWidth="xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
             <h2 className="text-3xl font-bold tracking-tight">Recently Added Providers</h2>
-            <a href="/providers/list" className="text-primary hover:underline mt-2 md:mt-0">
+            <Link href="/providers/list" className="text-primary hover:underline mt-2 md:mt-0">
               View all providers
-            </a>
+            </Link>
           </div>
           
           <Suspense fallback={<div className="text-center py-12">Loading recent providers...</div>}>
@@ -59,12 +61,9 @@ export default function Home() {
               Join our platform to showcase your services and connect with potential clients
             </p>
             <div>
-              <a 
-                href="/sign-up" 
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary-foreground text-primary hover:bg-primary-foreground/90 h-10 px-4 py-2"
-              >
-                Register Now
-              </a>
+              <Button asChild className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+                <Link href="/sign-up">Register Now</Link>
+              </Button>
             </div>
           </ResponsiveStack>
         </ResponsiveContainer>
