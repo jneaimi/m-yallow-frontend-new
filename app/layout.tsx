@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -59,30 +60,32 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {/* Screen reader announcements live region */}
-          <LiveRegion id="a11y-announcer" politeness="polite" />
+        <ClerkProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {/* Screen reader announcements live region */}
+            <LiveRegion id="a11y-announcer" politeness="polite" />
 
-          {/* Authentication-specific announcer */}
-          <LiveRegion id="a11y-announcer-assertive" politeness="assertive" />
+            {/* Authentication-specific announcer */}
+            <LiveRegion id="a11y-announcer-assertive" politeness="assertive" />
 
-          {/* Skip link for keyboard users */}
-          <SkipLink />
+            {/* Skip link for keyboard users */}
+            <SkipLink />
 
-          {/* Accessible toast notifications */}
-          <Toaster />
+            {/* Accessible toast notifications */}
+            <Toaster />
 
-          {/* Header with landmark role */}
-          <Header />
+            {/* Header with landmark role */}
+            <Header />
 
-          {/* Main content with id for skip link target */}
-          <main id="main-content" className="flex-1" tabIndex={-1}>
-            {children}
-          </main>
+            {/* Main content with id for skip link target */}
+            <main id="main-content" className="flex-1" tabIndex={-1}>
+              {children}
+            </main>
 
-          {/* Footer with landmark role */}
-          <Footer />
-        </ThemeProvider>
+            {/* Footer with landmark role */}
+            <Footer />
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X, ChevronDown, User } from "lucide-react";
+import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   NavigationMenu,
@@ -88,17 +89,11 @@ const navItems: NavItem[] = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Placeholder for auth state
   const { isMobile } = useDeviceCategory();
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
-  };
-
-  // For demonstration purposes
-  const toggleAuth = () => {
-    setIsLoggedIn(!isLoggedIn);
   };
 
   return (
@@ -166,41 +161,25 @@ export function Header() {
           {/* User Controls and Theme Toggle */}
           <ResponsiveStack direction="horizontal" spacing="2" align="center">
             {/* Auth Controls */}
-            {isLoggedIn ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      "rounded-full h-8 w-8 bg-muted",
-                      isMobile && "touch-target"
-                    )}
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="sr-only">User menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuItem onClick={toggleAuth}>
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+            <SignedOut>
               <HideOnMobile>
                 <ResponsiveStack direction="horizontal" spacing="2">
-                  <Button variant="ghost" size="sm" onClick={toggleAuth}>
-                    Login
-                  </Button>
-                  <Button variant="default" size="sm" onClick={toggleAuth}>
-                    Sign Up
-                  </Button>
+                  <SignInButton mode="modal">
+                    <Button variant="ghost" size="sm">
+                      Sign in
+                    </Button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <Button variant="default" size="sm">
+                      Sign up
+                    </Button>
+                  </SignUpButton>
                 </ResponsiveStack>
               </HideOnMobile>
-            )}
+            </SignedOut>
 
             {/* Theme Toggle */}
             <ThemeToggle />
@@ -264,28 +243,30 @@ export function Header() {
                 )}
               </div>
             ))}
-            {!isLoggedIn && (
+            <SignedOut>
               <div className="pt-4 mt-4 border-t">
                 <ResponsiveStack direction="horizontal" spacing="2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleAuth}
-                    className="w-full touch-target"
-                  >
-                    Login
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={toggleAuth}
-                    className="w-full touch-target"
-                  >
-                    Sign Up
-                  </Button>
+                  <SignInButton mode="modal">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full touch-target"
+                    >
+                      Sign in
+                    </Button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full touch-target"
+                    >
+                      Sign up
+                    </Button>
+                  </SignUpButton>
                 </ResponsiveStack>
               </div>
-            )}
+            </SignedOut>
           </div>
         </ShowOnMobile>
       )}
