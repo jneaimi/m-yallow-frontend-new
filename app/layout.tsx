@@ -31,8 +31,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <script dangerouslySetInnerHTML={{ __html: `
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
           (function() {
             try {
               const persistedTheme = localStorage.getItem('theme');
@@ -47,27 +52,19 @@ export default function RootLayout({
               console.warn('Failed to initialize theme:', e);
             }
           })();
-        ` }} />
+        `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
       >
-<<<<<<< Updated upstream
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {/* Screen reader announcements live region */}
           <LiveRegion id="a11y-announcer" politeness="polite" />
-=======
-<<<<<<< HEAD
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
-        >
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {/* Screen reader announcements live region */}
-            <LiveRegion id="a11y-announcer" politeness="polite" />
-            
-            {/* Authentication-specific announcer */}
-            <LiveRegion id="a11y-announcer-assertive" politeness="assertive" />
->>>>>>> Stashed changes
+
+          {/* Authentication-specific announcer */}
+          <LiveRegion id="a11y-announcer-assertive" politeness="assertive" />
 
           {/* Skip link for keyboard users */}
           <SkipLink />
@@ -83,41 +80,10 @@ export default function RootLayout({
             {children}
           </main>
 
-<<<<<<< Updated upstream
-=======
-            {/* Footer with landmark role */}
-            <Footer />
-          </ThemeProvider>
-        </body>
-      </ClerkProvider>
-=======
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {/* Screen reader announcements live region */}
-          <LiveRegion id="a11y-announcer" politeness="polite" />
-          
-          {/* Skip link for keyboard users */}
-          <SkipLink />
-          
-          {/* Accessible toast notifications */}
-          <Toaster toastOptions={{ role: 'status', ariaLive: 'polite' }} />
-          
-          {/* Header with landmark role */}
-          <Header />
-          
-          {/* Main content with id for skip link target */}
-          <main id="main-content" className="flex-1" tabIndex={-1}>
-            {children}
-          </main>
-          
->>>>>>> Stashed changes
           {/* Footer with landmark role */}
           <Footer />
         </ThemeProvider>
       </body>
-<<<<<<< Updated upstream
-=======
->>>>>>> parent of 23aae6b (fix and refactoring for same FR 1.2.9)
->>>>>>> Stashed changes
     </html>
   );
 }

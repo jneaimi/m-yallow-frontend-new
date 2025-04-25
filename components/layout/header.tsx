@@ -164,25 +164,6 @@ export function Header() {
           </HideOnMobile>
 
           {/* User Controls and Theme Toggle */}
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-          <ResponsiveStack direction="horizontal" spacing="2" align="center" className="transition-all duration-200 ease-in-out">
-            {/* Auth Controls with loading state handling */}
-            {!isLoaded ? (
-              <HideOnMobile>
-                <div className="h-8 w-16 animate-pulse rounded bg-muted"></div>
-              </HideOnMobile>
-            ) : isSignedIn ? (
-              <UserProfileButton 
-                displayMode="dropdown" 
-                variant="ghost" 
-                className={cn(isMobile && "touch-target")}
-                profileUrl="/profile"
-                settingsUrl="/settings"
-              />
-=======
->>>>>>> Stashed changes
           <ResponsiveStack direction="horizontal" spacing="2" align="center">
             {/* Auth Controls */}
             {isLoggedIn ? (
@@ -193,11 +174,7 @@ export function Header() {
                     size="icon"
                     className={cn(
                       "rounded-full h-8 w-8 bg-muted",
-<<<<<<< Updated upstream
-                      isMobile && "touch-target",
-=======
                       isMobile && "touch-target"
->>>>>>> Stashed changes
                     )}
                   >
                     <User className="h-4 w-4" />
@@ -212,10 +189,6 @@ export function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-<<<<<<< Updated upstream
-=======
->>>>>>> parent of 23aae6b (fix and refactoring for same FR 1.2.9)
->>>>>>> Stashed changes
             ) : (
               <HideOnMobile>
                 <ResponsiveStack direction="horizontal" spacing="2">
