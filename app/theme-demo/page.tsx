@@ -1,13 +1,7 @@
 "use client";
 
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme } from "@/hooks/use-theme";
 import { useDeviceCategory } from "@/hooks/use-breakpoint";
 import {
@@ -19,17 +13,12 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function ThemeDemoPage() {
-  const { theme, resolvedTheme, mounted, setTheme } = useTheme();
+  const { resolvedTheme, mounted, setTheme } = useTheme();
   const { isMobile } = useDeviceCategory();
-
+  
   if (!mounted) {
     return null; // Prevent hydration mismatch
   }
-
-  // Safely capitalize the resolved theme for display
-  const displayTheme = resolvedTheme
-    ? resolvedTheme.charAt(0).toUpperCase() + resolvedTheme.slice(1)
-    : "System";
 
   return (
     <ResponsiveContainer className="py-responsive">
@@ -43,8 +32,13 @@ export default function ThemeDemoPage() {
         <h1 className="text-responsive-xl font-bold">Theme System Demo</h1>
         <ThemeToggle />
       </ResponsiveStack>
-
-      <ResponsiveGrid cols={1} mdCols={2} gap="6" className="mb-8">
+      
+      <ResponsiveGrid
+        cols={1}
+        mdCols={2}
+        gap="6"
+        className="mb-8"
+      >
         <Card>
           <CardHeader>
             <CardTitle>Current Theme</CardTitle>
@@ -53,10 +47,12 @@ export default function ThemeDemoPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-medium">{displayTheme} Mode</p>
+            <p className="text-2xl font-medium">
+              {resolvedTheme?.charAt(0).toUpperCase() + resolvedTheme?.slice(1)} Mode
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button
-                variant={theme === "light" ? "default" : "outline"}
+                variant={resolvedTheme === "light" ? "default" : "outline"}
                 size={isMobile ? "touch-sm" : "sm"}
                 onClick={() => setTheme("light")}
                 className={isMobile ? "touch-target" : ""}
@@ -64,7 +60,7 @@ export default function ThemeDemoPage() {
                 Light
               </Button>
               <Button
-                variant={theme === "dark" ? "default" : "outline"}
+                variant={resolvedTheme === "dark" ? "default" : "outline"}
                 size={isMobile ? "touch-sm" : "sm"}
                 onClick={() => setTheme("dark")}
                 className={isMobile ? "touch-target" : ""}
@@ -72,7 +68,7 @@ export default function ThemeDemoPage() {
                 Dark
               </Button>
               <Button
-                variant={theme === "system" ? "default" : "outline"}
+                variant={resolvedTheme === "system" ? "default" : "outline"}
                 size={isMobile ? "touch-sm" : "sm"}
                 onClick={() => setTheme("system")}
                 className={isMobile ? "touch-target" : ""}
@@ -82,11 +78,13 @@ export default function ThemeDemoPage() {
             </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader>
             <CardTitle>Theme Features</CardTitle>
-            <CardDescription>The implementation includes:</CardDescription>
+            <CardDescription>
+              The implementation includes:
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-5 space-y-2">
@@ -99,11 +97,13 @@ export default function ThemeDemoPage() {
           </CardContent>
         </Card>
       </ResponsiveGrid>
-
+      
       <Card>
         <CardHeader>
           <CardTitle>Related Features</CardTitle>
-          <CardDescription>Explore other system features</CardDescription>
+          <CardDescription>
+            Explore other system features
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveStack
@@ -111,15 +111,22 @@ export default function ThemeDemoPage() {
             switchToHorizontalAt="sm"
             spacing="4"
           >
-            <Button asChild className={isMobile ? "touch-target" : ""}>
-              <Link href="/responsive-demo">Responsive Design Demo</Link>
-            </Button>
-            <Button
-              variant="outline"
+            <Button 
               asChild
               className={isMobile ? "touch-target" : ""}
             >
-              <Link href="/">Back to Home</Link>
+              <Link href="/responsive-demo">
+                Responsive Design Demo
+              </Link>
+            </Button>
+            <Button 
+              variant="outline" 
+              asChild
+              className={isMobile ? "touch-target" : ""}
+            >
+              <Link href="/">
+                Back to Home
+              </Link>
             </Button>
           </ResponsiveStack>
         </CardContent>
