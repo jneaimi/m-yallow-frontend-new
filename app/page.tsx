@@ -1,137 +1,73 @@
-"use client";
-
-import Image from "next/image";
+import { Suspense } from "react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useDeviceCategory } from "@/hooks/use-breakpoint";
-import {
-  ResponsiveContainer,
-  ResponsiveStack,
-  ResponsiveGrid,
-} from "@/components/ui/responsive";
+import { RecentProviders } from "./providers/recent-providers";
+import { SearchBar } from "@/components/providers/search-bar";
+import { FeaturedCategories } from "@/components/providers/featured-categories";
+import { featuredCategories } from "@/components/providers/category-icons";
+import { ResponsiveContainer, ResponsiveStack } from "@/components/ui/responsive";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const { isMobile } = useDeviceCategory();
-  
   return (
-    <ResponsiveContainer maxWidth="xl" className="py-responsive">
-      <div className="min-h-[80vh] flex flex-col items-center justify-center py-8">
-        <header className="w-full flex justify-end mb-16">
-          <ThemeToggle />
-        </header>
-        
-        <main className="flex flex-col gap-8 items-center text-center">
-          <Image
-            className="dark:invert"
-            src="/next.svg"
-            alt="Next.js logo"
-            width={180}
-            height={38}
-            priority
-          />
-          
-          <ol className="list-inside list-decimal text-responsive max-w-md text-center font-mono">
-            <li className="mb-4 tracking-tight">
-              Get started by editing{" "}
-              <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-mono font-semibold">
-                app/page.tsx
-              </code>
-            </li>
-            <li className="tracking-tight">
-              Save and see your changes instantly.
-            </li>
-          </ol>
-
-          <ResponsiveStack
-            direction="vertical"
-            switchToHorizontalAt="sm"
-            spacing="4"
-            className="mt-4"
-          >
-            <Button 
-              size={isMobile ? "touch" : "lg"} 
-              asChild
-            >
-              <Link href="/responsive-demo">
-                Responsive Design Demo
-              </Link>
-            </Button>
+    <div className="min-h-[80vh]">
+      {/* Hero Section with Search */}
+      <section className="bg-gradient-to-b from-primary/10 to-background py-16 md:py-24">
+        <ResponsiveContainer maxWidth="xl" className="text-center">
+          <ResponsiveStack direction="vertical" spacing="8" className="max-w-3xl mx-auto">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+                Find the Perfect Provider for Your Needs
+              </h1>
+              <p className="text-xl text-muted-foreground">
+                Connect with trusted professionals and services in your area
+              </p>
+            </div>
             
-            <Button 
-              variant="outline" 
-              size={isMobile ? "touch" : "lg"} 
-              asChild
-            >
-              <a
-                href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Read the docs
-              </a>
-            </Button>
+            <SearchBar className="max-w-2xl mx-auto" />
           </ResponsiveStack>
+        </ResponsiveContainer>
+      </section>
+
+      {/* Featured Categories */}
+      <section className="py-16">
+        <ResponsiveContainer maxWidth="xl">
+          <h2 className="text-3xl font-bold tracking-tight mb-8">Browse Categories</h2>
+          <FeaturedCategories categories={featuredCategories} />
+        </ResponsiveContainer>
+      </section>
+
+      {/* Recent Providers */}
+      <section className="py-16 bg-muted/30">
+        <ResponsiveContainer maxWidth="xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold tracking-tight">Recently Added Providers</h2>
+            <Link href="/providers/list" className="text-primary hover:underline mt-2 md:mt-0">
+              View all providers
+            </Link>
+          </div>
           
-          <ResponsiveGrid
-            cols={1}
-            smCols={3}
-            gap="6"
-            className="mt-12"
-          >
-            <a
-              className="flex flex-col items-center gap-2 p-4 hover:bg-accent rounded-lg transition-colors text-center touch-target"
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                src="/file.svg"
-                alt="Learn"
-                width={24}
-                height={24}
-                className="mb-2"
-              />
-              <span className="font-medium">Learn</span>
-              <span className="text-sm text-muted-foreground">Official tutorials</span>
-            </a>
-            
-            <a
-              className="flex flex-col items-center gap-2 p-4 hover:bg-accent rounded-lg transition-colors text-center touch-target"
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                src="/window.svg"
-                alt="Examples"
-                width={24}
-                height={24}
-                className="mb-2"
-              />
-              <span className="font-medium">Examples</span>
-              <span className="text-sm text-muted-foreground">Discover templates</span>
-            </a>
-            
-            <a
-              className="flex flex-col items-center gap-2 p-4 hover:bg-accent rounded-lg transition-colors text-center touch-target"
-              href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                src="/globe.svg"
-                alt="Next.js"
-                width={24}
-                height={24}
-                className="mb-2"
-              />
-              <span className="font-medium">Next.js</span>
-              <span className="text-sm text-muted-foreground">Visit nextjs.org →</span>
-            </a>
-          </ResponsiveGrid>
-        </main>
-      </div>
-    </ResponsiveContainer>
+          <Suspense fallback={<div className="text-center py-12">Loading recent providers...</div>}>
+            <RecentProviders />
+          </Suspense>
+        </ResponsiveContainer>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-16 bg-primary text-primary-foreground">
+        <ResponsiveContainer maxWidth="xl" className="text-center">
+          <ResponsiveStack direction="vertical" spacing="6" className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold tracking-tight">Are You a Provider?</h2>
+            <p className="text-xl">
+              Join our platform to showcase your services and connect with potential clients
+            </p>
+            <div>
+              <Button asChild className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+                <Link href="/sign-up">Register Now</Link>
+              </Button>
+            </div>
+          </ResponsiveStack>
+        </ResponsiveContainer>
+      </section>
+    </div>
   );
 }
