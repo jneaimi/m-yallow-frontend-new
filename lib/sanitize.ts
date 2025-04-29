@@ -52,12 +52,20 @@ export function sanitizeString(value: string | number | undefined | null): strin
  * This is useful for sanitizing objects before they are serialized to JSON.
  * 
  * @param obj - The object to sanitize
+ * @param seen - WeakSet to track processed objects and prevent circular reference issues
  * @returns A new object with all string properties sanitized
  */
-export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
+export function sanitizeObject<T extends Record<string, unknown>>(obj: T, seen?: WeakSet<object>): T {
   if (!obj || typeof obj !== 'object') {
     return obj;
   }
+
+  // Handle circular references
+  const _seen = seen || new WeakSet();
+  if (_seen.has(obj)) {
+    return {} as T; // Return empty object for circular references
+  }
+  _seen.add(obj);
 
   const result = {} as T;
 
@@ -72,11 +80,11 @@ export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
       } else if (Array.isArray(value)) {
         // If the value is an array, recursively sanitize each element
         result[key] = value.map(item => 
-          typeof item === 'object' ? sanitizeObject(item) : sanitizeString(item)
+          typeof item === 'object' && item !== null ? sanitizeObject(item, _seen) : sanitizeString(item)
         ) as unknown as T[typeof key];
       } else if (value && typeof value === 'object') {
         // If the value is an object, recursively sanitize it
-        result[key] = sanitizeObject(value) as unknown as T[typeof key];
+        result[key] = sanitizeObject(value, _seen) as unknown as T[typeof key];
       } else {
         // For other types (boolean, null, undefined), use as-is
         result[key] = value;
