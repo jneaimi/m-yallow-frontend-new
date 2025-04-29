@@ -15,10 +15,10 @@ interface SearchPageProps {
  * @returns Array of providers matching the search criteria
  */
 async function searchProviders(query: string, limit: number = 20): Promise<Provider[]> {
-  // If no query is provided, list all providers instead
+  // If no query is provided, list all providers instead, but still apply the limit
   const apiEndpoint = query 
     ? `${PROVIDER_API.SEARCH}?${new URLSearchParams({ query, limit: limit.toString() })}`
-    : PROVIDER_API.LIST;
+    : `${PROVIDER_API.LIST}?${new URLSearchParams({ limit: limit.toString() })}`;
   
   console.log(`Fetching providers from: ${apiEndpoint}`);
   

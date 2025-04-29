@@ -58,7 +58,10 @@ export function ProviderDetailClient({ provider }: ProviderDetailClientProps) {
       .join(", ");
 
   // Check if we have map-worthy data
-  const hasMapData = (provider.latitude && provider.longitude) || fullAddress;
+  const hasValidCoords = 
+    typeof provider.latitude === "number" && 
+    typeof provider.longitude === "number";
+  const hasMapData = hasValidCoords || Boolean(fullAddress);
 
   return (
     <div className="py-8 md:py-12">

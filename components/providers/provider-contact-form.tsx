@@ -10,10 +10,11 @@ import { useState } from "react";
 
 interface ContactFormProps {
   providerName: string;
+  providerId: number;
   providerEmail?: string;
 }
 
-export function ProviderContactForm({ providerName, providerEmail }: ContactFormProps) {
+export function ProviderContactForm({ providerName, providerId, providerEmail }: ContactFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -43,9 +44,18 @@ export function ProviderContactForm({ providerName, providerEmail }: ContactForm
     setFormStatus({ message: '', type: null });
 
     try {
-      // Here you would typically send the form data to your backend
-      // For now, we'll simulate a successful submission after a delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Send the form data to the API
+      const response = await fetch(`/api/providers/${providerId}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      // Handle API response
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
+      }
       
       // Show success message
       setFormStatus({
@@ -63,7 +73,7 @@ export function ProviderContactForm({ providerName, providerEmail }: ContactForm
       }, 2000);
     } catch (error) {
       setFormStatus({
-        message: "There was a problem sending your message. Please try again.",
+        message: error instanceof Error ? error.message : "There was a problem sending your message. Please try again.",
         type: 'error'
       });
     } finally {

@@ -1,6 +1,7 @@
 "use client";
 
 import { Provider } from "@/lib/api/providers";
+import { sanitizeObject } from "@/lib/sanitize";
 
 interface ProviderSchemaMarkupProps {
   provider: Provider;
@@ -13,7 +14,7 @@ export function ProviderSchemaMarkup({ provider }: ProviderSchemaMarkupProps) {
   }
 
   // Create the structured data for search engines
-  const schemaData = {
+  const unsanitizedSchemaData = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "name": provider.name,
@@ -41,6 +42,9 @@ export function ProviderSchemaMarkup({ provider }: ProviderSchemaMarkupProps) {
       "category": provider.categories.map(c => c.name).join(", ")
     })
   };
+
+  // Sanitize all fields in the schema data to prevent XSS
+  const schemaData = sanitizeObject(unsanitizedSchemaData);
 
   return (
     <script

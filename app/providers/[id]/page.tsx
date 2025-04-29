@@ -99,7 +99,7 @@ export async function generateMetadata({ params }: ProviderPageProps) {
       (provider.about.length > 160 ? `${provider.about.substring(0, 157)}...` : provider.about) 
       : `View details about ${provider.name}`,
     openGraph: {
-      images: [provider.heroImageUrl]
+      images: provider.heroImageUrl ? [provider.heroImageUrl] : []
     }
   };
 }

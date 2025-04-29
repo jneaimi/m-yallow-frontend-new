@@ -8,7 +8,8 @@ export const PROVIDER_API = {
   LIST: `${API_BASE_URL}/providers`,
   SEARCH: `${API_BASE_URL}/providers/search`,
   RECENT: `${API_BASE_URL}/providers/recent`,
-  DETAIL: (id: string | number) => `${API_BASE_URL}/providers/${id}`
+  DETAIL: (id: string | number) => `${API_BASE_URL}/providers/${id}`,
+  CONTACT: (id: string | number) => `${API_BASE_URL}/providers/${id}/contact`
 };
 
 // API Interfaces
