@@ -14,14 +14,25 @@ export const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_URL || "https://img.bfor
 export function getProviderHeroImageUrl(providerId: number | string, heroImageUrl?: string | null): string {
   // If a direct URL is provided by the API, use it
   if (heroImageUrl) {
-    return heroImageUrl;
+    // Check if it's already a full URL
+    if (heroImageUrl.startsWith('http://') || heroImageUrl.startsWith('https://')) {
+      return heroImageUrl;
+    }
+    
+    // Handle relative paths using the API base URL
+    if (heroImageUrl.startsWith('/')) {
+      // Extract the origin from the API_BASE_URL
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiOrigin = apiUrl.replace(/\/+$/, ''); // Remove trailing slashes
+      return `${apiOrigin}${heroImageUrl}`;
+    }
   }
   
   // Make sure R2_PUBLIC_URL ends with a slash
   const baseUrl = R2_PUBLIC_URL.endsWith('/') ? R2_PUBLIC_URL : `${R2_PUBLIC_URL}/`;
   
   // Otherwise, construct the URL based on the provider ID
-  return `${baseUrl}providers/${providerId}/hero.jpg`;
+  return `${baseUrl}${providerId}/hero.jpg`;
 }
 
 /**
