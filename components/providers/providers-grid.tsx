@@ -2,12 +2,14 @@
 
 import { ProviderCard } from "@/components/providers/provider-card";
 import { ResponsiveGrid } from "@/components/ui/responsive";
+import { Category } from "@/lib/api/providers";
 
 interface Provider {
   id: number;
   name: string;
   heroImageUrl: string;
   aboutSnippet: string;
+  categories?: Category[];
 }
 
 interface ProvidersGridProps {
@@ -24,6 +26,7 @@ export function ProvidersGrid({ providers }: ProvidersGridProps) {
           name={provider.name}
           heroImageUrl={provider.heroImageUrl}
           aboutSnippet={provider.aboutSnippet}
+          categories={provider.categories}
         />
       ))}
     </ResponsiveGrid>

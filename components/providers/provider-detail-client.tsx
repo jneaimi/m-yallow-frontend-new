@@ -5,11 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ResponsiveContainer } from "@/components/ui/responsive";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { getFallbackImageUrl } from "@/lib/image-utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Category } from "@/lib/api/providers";
 
 interface ProviderDetailClientProps {
   provider: {
@@ -20,6 +22,7 @@ interface ProviderDetailClientProps {
     about: string;
     heroImageUrl: string;
     createdAt: string;
+    categories?: Category[];
   };
 }
 
@@ -62,6 +65,18 @@ export function ProviderDetailClient({ provider }: ProviderDetailClientProps) {
           <div className="md:col-span-2">
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">{provider.name || 'Unnamed Provider'}</h1>
             <p className="text-muted-foreground mb-6">{provider.location || 'Location not specified'}</p>
+            
+            {/* Display categories */}
+            {provider.categories && provider.categories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {provider.categories.map(category => (
+                  <Badge key={category.id} className="px-3 py-1">
+                    {category.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            
             <h2 className="text-xl font-semibold mb-3">About</h2>
             <p className="text-base leading-relaxed whitespace-pre-line">
               {provider.about || 'No information provided about this service provider.'}

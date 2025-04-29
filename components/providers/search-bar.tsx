@@ -23,6 +23,7 @@ export function SearchBar({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
+      // Use the q parameter for better compatibility with the search component
       router.push(`/providers/search?q=${encodeURIComponent(searchTerm.trim())}`);
     }
   };

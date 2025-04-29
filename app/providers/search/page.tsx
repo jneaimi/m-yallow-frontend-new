@@ -2,79 +2,68 @@ import { Suspense } from "react";
 import { SearchBar } from "@/components/providers/search-bar";
 import { ProviderCard } from "@/components/providers/provider-card";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/ui/responsive";
-import { getProviderHeroImageUrl } from "@/lib/image-utils";
+import { PROVIDER_API, ApiProvider, Provider, transformProvider } from "@/lib/api/providers";
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; category?: string }>;
 }
 
-async function searchProviders(query: string, category?: string) {
-  // For development, use localhost API
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+/**
+ * Searches for providers using the search API endpoint
+ * @param query - Search query term
+ * @param limit - Maximum number of results to return
+ * @returns Array of providers matching the search criteria
+ */
+async function searchProviders(query: string, limit: number = 20): Promise<Provider[]> {
+  if (!query) return [];
   
   try {
-    const params = new URLSearchParams();
-    if (query) params.append('q', query);
-    if (category) params.append('category', category);
+    const params = new URLSearchParams({
+      query: query,
+      limit: limit.toString()
+    });
     
-    const res = await fetch(`${baseUrl}/providers?${params}`, { next: { revalidate: 60 } });
+    // Use the new search endpoint
+    const res = await fetch(`${PROVIDER_API.SEARCH}?${params}`, { next: { revalidate: 60 } });
     
     if (!res.ok) {
-      throw new Error('Failed to search providers');
+      throw new Error(`Failed to search providers: ${res.status} ${res.statusText}`);
     }
     
-    const data = await res.json();
+    // The new search endpoint returns an array directly
+    const providers = await res.json() as ApiProvider[];
     
-    // Define the API provider structure
-    interface ApiProvider {
-      id: number;
-      name: string;
-      contact?: string;
-      location?: string;
-      about?: string;
-      hero_image_url?: string;
-      created_at?: string;
-    }
-    
-    // Map snake_case API fields to camelCase for the client component
-    return (data.providers || []).map((provider: ApiProvider) => ({
-      id: provider.id,
-      name: provider.name,
-      contact: provider.contact,
-      location: provider.location,
-      aboutSnippet: provider.about,
-      heroImageUrl: provider.hero_image_url ? provider.hero_image_url : getProviderHeroImageUrl(provider.id),
-      createdAt: provider.created_at,
-    }));
+    // Transform API providers to client provider format
+    return providers.map(transformProvider);
   } catch (error) {
-    console.error('Error searching providers:', error);
+    console.error('Error searching providers:', error instanceof Error ? error.message : String(error));
     
     // Return mock data as fallback
     return [
       {
         id: 1,
         name: "Sunshine Wellness Center",
-        heroImageUrl: getProviderHeroImageUrl(1),
-        aboutSnippet: "Providing holistic wellness services with a focus on mental health and physical wellbeing."
+        heroImageUrl: null,
+        aboutSnippet: "Providing holistic wellness services with a focus on mental health and physical wellbeing.",
+        categories: [
+          { id: 2, name: "Test Category 1", icon: "test-icon-1" }
+        ]
       },
       {
         id: 2,
         name: "Tech Solutions Inc",
-        heroImageUrl: getProviderHeroImageUrl(2),
-        aboutSnippet: "Cutting-edge technology solutions for businesses of all sizes. Specializing in cloud services and cybersecurity."
-      },
-      {
-        id: 3,
-        name: "Green Earth Landscaping",
-        heroImageUrl: getProviderHeroImageUrl(3),
-        aboutSnippet: "Sustainable landscaping and garden design with eco-friendly practices and native plant expertise."
+        heroImageUrl: null,
+        aboutSnippet: "Cutting-edge technology solutions for businesses of all sizes. Specializing in cloud services and cybersecurity.",
+        categories: [
+          { id: 3, name: "Test Category 2", icon: "test-icon-1" }
+        ]
       }
     ];
   }
 }
 
-async function SearchResults({ query, category }: { query?: string; category?: string }) {
-  const providers = await searchProviders(query || "", category);
+async function SearchResults({ query }: { query?: string }) {
+  const providers = await searchProviders(query || "");
   
   if (providers.length === 0) {
     return (
@@ -101,6 +90,7 @@ async function SearchResults({ query, category }: { query?: string; category?: s
           name={provider.name}
           heroImageUrl={provider.heroImageUrl}
           aboutSnippet={provider.aboutSnippet}
+          categories={provider.categories}
         />
       ))}
     </ResponsiveGrid>
@@ -112,13 +102,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   
   const query = params.q || "";
-  const category = params.category;
   
-  const title = category 
-    ? `${category.charAt(0).toUpperCase() + category.slice(1)} Providers`
-    : query 
-      ? `Search results for "${query}"`
-      : "All Providers";
+  const title = query 
+    ? `Search results for "${query}"`
+    : "Provider Search";
   
   return (
     <div className="py-8 md:py-12">
@@ -129,7 +116,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         </div>
         
         <Suspense fallback={<div className="text-center py-12">Searching providers...</div>}>
-          <SearchResults query={query} category={category} />
+          <SearchResults query={query} />
         </Suspense>
       </ResponsiveContainer>
     </div>
