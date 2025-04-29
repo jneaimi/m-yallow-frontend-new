@@ -4,6 +4,14 @@
 import DOMPurify from 'dompurify';
 
 /**
+ * Simple regex-based HTML sanitizer for server-side contexts
+ * where DOMPurify is not available
+ */
+function simpleSanitize(str: string): string {
+  return str.replace(/<[^>]*>?/gm, '');
+}
+
+/**
  * Sanitizes a string by removing all HTML tags.
  * Use this function when embedding user-generated content in dangerous contexts
  * like JSON-LD or HTML attributes.
@@ -19,11 +27,24 @@ export function sanitizeString(value: string | number | undefined | null): strin
   // Convert to string if it's a number
   const stringValue = typeof value === 'number' ? String(value) : value;
   
-  // Use DOMPurify to strip all HTML tags and entities
-  return DOMPurify.sanitize(stringValue, {
-    ALLOWED_TAGS: [], // No HTML tags allowed
-    ALLOWED_ATTR: [] // No attributes allowed
-  });
+  // Check if we're in a browser environment
+  const isBrowser = typeof window !== 'undefined';
+  
+  if (isBrowser) {
+    try {
+      // Use DOMPurify in browser environments
+      return DOMPurify.sanitize(stringValue, {
+        ALLOWED_TAGS: [], // No HTML tags allowed
+        ALLOWED_ATTR: [] // No attributes allowed
+      });
+    } catch (error) {
+      console.error('DOMPurify sanitization failed, using fallback method:', error);
+      return simpleSanitize(stringValue);
+    }
+  } else {
+    // Use regex-based sanitization for server-side rendering
+    return simpleSanitize(stringValue);
+  }
 }
 
 /**
@@ -33,7 +54,7 @@ export function sanitizeString(value: string | number | undefined | null): strin
  * @param obj - The object to sanitize
  * @returns A new object with all string properties sanitized
  */
-export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
+export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
   if (!obj || typeof obj !== 'object') {
     return obj;
   }
@@ -47,15 +68,15 @@ export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
 
       if (typeof value === 'string' || typeof value === 'number') {
         // If the value is a string or number, sanitize it
-        result[key] = sanitizeString(value) as any;
+        result[key] = sanitizeString(value) as unknown as T[typeof key];
       } else if (Array.isArray(value)) {
         // If the value is an array, recursively sanitize each element
         result[key] = value.map(item => 
           typeof item === 'object' ? sanitizeObject(item) : sanitizeString(item)
-        ) as any;
+        ) as unknown as T[typeof key];
       } else if (value && typeof value === 'object') {
         // If the value is an object, recursively sanitize it
-        result[key] = sanitizeObject(value) as any;
+        result[key] = sanitizeObject(value) as unknown as T[typeof key];
       } else {
         // For other types (boolean, null, undefined), use as-is
         result[key] = value;

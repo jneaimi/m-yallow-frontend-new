@@ -9,10 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getFallbackImageUrl } from "@/lib/image-utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Category } from "@/lib/api/providers";
 import { ProviderLocationMap } from "@/components/maps/provider-location-map";
 import { ProviderLocationDetails } from "@/components/providers/provider-location-details";
@@ -205,7 +201,8 @@ export function ProviderDetailClient({ provider }: ProviderDetailClientProps) {
             {/* Contact action */}
             <div className="mt-6 pt-6 border-t">
               <ProviderContactForm 
-                providerName={provider.name} 
+                providerName={provider.name}
+                providerId={provider.id}
                 providerEmail={provider.contact} 
               />
             </div>

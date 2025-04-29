@@ -20,6 +20,8 @@ export function ProviderContactForm({ providerName, providerId, providerEmail }:
     name: "",
     email: "",
     message: "",
+    // Only include recipientEmail if providerEmail is provided
+    ...(providerEmail ? { recipientEmail: providerEmail } : {})
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStatus, setFormStatus] = useState<{
@@ -64,7 +66,12 @@ export function ProviderContactForm({ providerName, providerId, providerEmail }:
       });
       
       // Reset form
-      setFormData({ name: "", email: "", message: "" });
+      setFormData({
+        name: "",
+        email: "",
+        message: "",
+        ...(providerEmail ? { recipientEmail: providerEmail } : {})
+      });
       
       // Close dialog after a delay
       setTimeout(() => {

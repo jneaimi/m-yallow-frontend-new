@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_BASE_URL } from '@/lib/api/providers';
+import { sanitizeObject } from '@/lib/sanitize';
 
 export async function POST(
   request: NextRequest,
@@ -9,8 +10,11 @@ export async function POST(
     const providerId = params.providerId;
     const requestData = await request.json();
     
+    // Sanitize input data
+    const sanitizedData = sanitizeObject(requestData);
+    
     // Validate required fields
-    if (!requestData.name || !requestData.email || !requestData.message) {
+    if (!sanitizedData.name || !sanitizedData.email || !sanitizedData.message) {
       return NextResponse.json(
         { error: 'Name, email, and message are required' },
         { status: 400 }
@@ -23,7 +27,7 @@ export async function POST(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestData),
+      body: JSON.stringify(sanitizedData),
     });
 
     // Handle various error responses from the API
