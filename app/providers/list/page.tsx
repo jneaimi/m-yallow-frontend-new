@@ -15,7 +15,6 @@ import {
   PROVIDER_API, 
   Provider, 
   ProvidersListResponse, 
-  ApiProvider, 
   transformProvider 
 } from "@/lib/api/providers";
 
@@ -33,15 +32,7 @@ interface ListPageProps {
   }>;
 }
 
-/**
- * Response structure for providers list endpoint
- */
-interface ProvidersResponse {
-  providers: Provider[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+// We're now using ProvidersListResponse from the centralized API service
 
 // Cache revalidation time in seconds
 const CACHE_REVALIDATE_TIME = 60;
@@ -63,16 +54,18 @@ async function getProvidersList(
   name: string = '',
   location: string = '',
   category: string = ''
-): Promise<ProvidersResponse> {
+): Promise<ProvidersListResponse> {
   try {
-    // Create query parameters
+    // Create query parameters - only include non-empty filter params
     const params = new URLSearchParams({
       page: page.toString(),
-      pageSize: pageSize.toString(),
-      name,
-      location,
-      category
+      pageSize: pageSize.toString()
     });
+    
+    // Only append non-empty filter parameters
+    if (name) params.append("name", name);
+    if (location) params.append("location", location);
+    if (category) params.append("category", category);
     
     const res = await fetch(
       `${PROVIDER_API.LIST}?${params}`,
