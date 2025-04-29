@@ -5,10 +5,11 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost
 
 // Provider API endpoints
 export const PROVIDER_API = {
-  LIST: `${API_BASE_URL}/public/providers`,
-  SEARCH: `${API_BASE_URL}/public/providers/search`,
-  RECENT: `${API_BASE_URL}/public/providers/recent`,
-  DETAIL: (id: string | number) => `${API_BASE_URL}/public/providers/${id}`
+  LIST: `${API_BASE_URL}/providers`,
+  SEARCH: `${API_BASE_URL}/providers/search`,
+  RECENT: `${API_BASE_URL}/providers/recent`,
+  DETAIL: (id: string | number) => `${API_BASE_URL}/providers/${id}`,
+  CONTACT: (id: string | number) => `${API_BASE_URL}/providers/${id}/contact`
 };
 
 // API Interfaces
@@ -57,6 +58,16 @@ export interface Provider {
   heroImageUrl: string;
   createdAt?: string;
   updatedAt?: string;
+  // Address components
+  street?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  // Geographic coordinates
+  latitude?: number;
+  longitude?: number;
+  // Categories
   categories?: Category[];
 }
 
@@ -82,9 +93,22 @@ export interface RecentProvider {
  * @returns Transformed provider for client components
  */
 export function transformProvider(apiProvider: ApiProvider): Provider {
+  // Log the structure of the API provider object
+  console.log("Transforming provider:", JSON.stringify(apiProvider, null, 2));
+  
+  // Ensure we have a valid object
+  if (!apiProvider || typeof apiProvider !== 'object') {
+    console.error("Invalid provider data:", apiProvider);
+    return {
+      id: 0,
+      name: "Unknown Provider",
+      heroImageUrl: getFallbackImageUrl(),
+    };
+  }
+  
   return {
     id: apiProvider.id,
-    name: apiProvider.name,
+    name: apiProvider.name || "Unnamed Provider",
     contact: apiProvider.contact,
     location: apiProvider.location,
     aboutSnippet: apiProvider.about,
@@ -92,7 +116,17 @@ export function transformProvider(apiProvider: ApiProvider): Provider {
     heroImageUrl: apiProvider.hero_image_url ? apiProvider.hero_image_url : getProviderHeroImageUrl(apiProvider.id),
     createdAt: apiProvider.created_at,
     updatedAt: apiProvider.updated_at,
-    categories: apiProvider.categories
+    // Address components
+    street: apiProvider.street,
+    city: apiProvider.city,
+    state: apiProvider.state,
+    postalCode: apiProvider.postal_code,
+    country: apiProvider.country,
+    // Geographic coordinates
+    latitude: apiProvider.latitude,
+    longitude: apiProvider.longitude,
+    // Categories
+    categories: Array.isArray(apiProvider.categories) ? apiProvider.categories : []
   };
 }
 

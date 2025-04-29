@@ -11,8 +11,9 @@ import { Category } from "@/lib/api/providers";
 interface ProviderCardProps {
   id: number;
   name: string;
-  heroImageUrl: string;
-  aboutSnippet: string;
+  heroImageUrl?: string | null;
+  aboutSnippet?: string;
+  about?: string;
   categories?: Category[];
 }
 
@@ -21,6 +22,7 @@ export function ProviderCard({
   name, 
   heroImageUrl, 
   aboutSnippet,
+  about,
   categories = []
 }: ProviderCardProps) {
   const [imgError, setImgError] = useState(false);
@@ -45,7 +47,9 @@ export function ProviderCard({
           <CardTitle className="line-clamp-1">{name}</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
-          <p className="text-muted-foreground line-clamp-3 mb-4">{aboutSnippet}</p>
+          <p className="text-muted-foreground line-clamp-3 mb-4">
+            {aboutSnippet || about || 'No description available'}
+          </p>
           
           {/* Display categories if available */}
           {categories && categories.length > 0 && (
