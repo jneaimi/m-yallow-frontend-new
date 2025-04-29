@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { SearchBar } from "@/components/providers/search-bar";
 import { ProviderCard } from "@/components/providers/provider-card";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/ui/responsive";
-import { getProviderHeroImageUrl } from "@/lib/image-utils";
 import { 
   Pagination, 
   PaginationContent, 
@@ -12,39 +11,26 @@ import {
   PaginationNext,
   PaginationEllipsis
 } from "@/components/ui/pagination";
+import { 
+  PROVIDER_API, 
+  Provider, 
+  ProvidersListResponse, 
+  ApiProvider, 
+  transformProvider 
+} from "@/lib/api/providers";
 
 /**
  * Props for the List page component
  * @property searchParams - In Next.js 14/15, searchParams is a Promise that must be awaited
  */
 interface ListPageProps {
-  searchParams: Promise<{ page?: string; pageSize?: string }>;
-}
-
-/**
- * API response provider object with snake_case properties
- */
-interface ApiProvider {
-  id: number;
-  name: string;
-  contact?: string;
-  location?: string;
-  about?: string;
-  hero_image_url?: string;
-  created_at?: string;
-}
-
-/**
- * Processed provider object with camelCase properties for client components
- */
-interface Provider {
-  id: number;
-  name: string;
-  contact?: string;
-  location?: string;
-  aboutSnippet?: string;
-  heroImageUrl: string;
-  createdAt?: string;
+  searchParams: Promise<{ 
+    page?: string; 
+    pageSize?: string;
+    name?: string;
+    location?: string;
+    category?: string;
+  }>;
 }
 
 /**
@@ -66,15 +52,30 @@ const CACHE_REVALIDATE_TIME = 60;
  * 
  * @param page - Page number (1-based)
  * @param pageSize - Number of items per page
+ * @param name - Optional filter by provider name
+ * @param location - Optional filter by provider location
+ * @param category - Optional filter by provider category
  * @returns Processed provider data with pagination info
  */
-async function getProvidersList(page: number = 1, pageSize: number = 12): Promise<ProvidersResponse> {
-  // For development, use localhost API
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  
+async function getProvidersList(
+  page: number = 1, 
+  pageSize: number = 12,
+  name: string = '',
+  location: string = '',
+  category: string = ''
+): Promise<ProvidersResponse> {
   try {
+    // Create query parameters
+    const params = new URLSearchParams({
+      page: page.toString(),
+      pageSize: pageSize.toString(),
+      name,
+      location,
+      category
+    });
+    
     const res = await fetch(
-      `${baseUrl}/providers?page=${page}&pageSize=${pageSize}`,
+      `${PROVIDER_API.LIST}?${params}`,
       { next: { revalidate: CACHE_REVALIDATE_TIME } }
     );
     
@@ -82,17 +83,10 @@ async function getProvidersList(page: number = 1, pageSize: number = 12): Promis
       throw new Error(`Failed to fetch providers list: ${res.status} ${res.statusText}`);
     }
     
-    const data = await res.json();
-    // Map snake_case API fields to camelCase for the client component
-    const processedProviders = data.providers.map((provider: ApiProvider) => ({
-      id: provider.id,
-      name: provider.name,
-      contact: provider.contact,
-      location: provider.location,
-      aboutSnippet: provider.about,
-      heroImageUrl: provider.hero_image_url ? provider.hero_image_url : getProviderHeroImageUrl(provider.id),
-      createdAt: provider.created_at,
-    }));
+    const data = await res.json() as ProvidersListResponse;
+    
+    // Transform API providers to client provider format
+    const processedProviders = data.providers.map(transformProvider);
     
     return {
       providers: processedProviders,
@@ -111,27 +105,37 @@ async function getProvidersList(page: number = 1, pageSize: number = 12): Promis
           name: "Sunshine Wellness Center",
           contact: null,
           location: null,
-          heroImageUrl: getProviderHeroImageUrl(1),
+          heroImageUrl: null,
           aboutSnippet: "Providing holistic wellness services with a focus on mental health and physical wellbeing.",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          categories: [
+            { id: 2, name: "Test Category 1", icon: "test-icon-1" }
+          ]
         },
         {
           id: 2,
           name: "Tech Solutions Inc",
           contact: null,
           location: null,
-          heroImageUrl: getProviderHeroImageUrl(2),
+          heroImageUrl: null,
           aboutSnippet: "Cutting-edge technology solutions for businesses of all sizes. Specializing in cloud services and cybersecurity.",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          categories: [
+            { id: 3, name: "Test Category 2", icon: "test-icon-1" }
+          ]
         },
         {
           id: 3,
           name: "Green Earth Landscaping",
           contact: null,
           location: null,
-          heroImageUrl: getProviderHeroImageUrl(3),
+          heroImageUrl: null,
           aboutSnippet: "Sustainable landscaping and garden design with eco-friendly practices and native plant expertise.",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          categories: [
+            { id: 2, name: "Test Category 1", icon: "test-icon-1" },
+            { id: 3, name: "Test Category 2", icon: "test-icon-1" }
+          ]
         }
       ],
       total: 3,
@@ -144,11 +148,17 @@ async function getProvidersList(page: number = 1, pageSize: number = 12): Promis
 function PaginationControls({ 
   currentPage, 
   totalPages, 
-  pageSize 
+  pageSize,
+  name,
+  location,
+  category
 }: { 
   currentPage: number; 
   totalPages: number; 
-  pageSize: number; 
+  pageSize: number;
+  name?: string;
+  location?: string;
+  category?: string;
 }) {
   // Generate page numbers to show
   const getPageNumbers = () => {
@@ -180,12 +190,21 @@ function PaginationControls({
   
   const pageNumbers = getPageNumbers();
   
+  // Create base query params
+  const getQueryParams = (page: number) => {
+    const params = new URLSearchParams({ page: page.toString(), pageSize: pageSize.toString() });
+    if (name) params.append('name', name);
+    if (location) params.append('location', location);
+    if (category) params.append('category', category);
+    return params.toString();
+  };
+  
   return (
     <Pagination>
       <PaginationContent>
         {currentPage > 1 && (
           <PaginationItem>
-            <PaginationPrevious href={`/providers/list?page=${currentPage - 1}&pageSize=${pageSize}`} />
+            <PaginationPrevious href={`/providers/list?${getQueryParams(currentPage - 1)}`} />
           </PaginationItem>
         )}
         
@@ -197,7 +216,7 @@ function PaginationControls({
           ) : (
             <PaginationItem key={pageNum}>
               <PaginationLink 
-                href={`/providers/list?page=${pageNum}&pageSize=${pageSize}`}
+                href={`/providers/list?${getQueryParams(pageNum)}`}
                 isActive={pageNum === currentPage}
               >
                 {pageNum}
@@ -208,7 +227,7 @@ function PaginationControls({
         
         {currentPage < totalPages && (
           <PaginationItem>
-            <PaginationNext href={`/providers/list?page=${currentPage + 1}&pageSize=${pageSize}`} />
+            <PaginationNext href={`/providers/list?${getQueryParams(currentPage + 1)}`} />
           </PaginationItem>
         )}
       </PaginationContent>
@@ -216,8 +235,20 @@ function PaginationControls({
   );
 }
 
-async function ProvidersList({ page, pageSize }: { page: number; pageSize: number }) {
-  const { providers, total } = await getProvidersList(page, pageSize);
+async function ProvidersList({ 
+  page, 
+  pageSize,
+  name,
+  location,
+  category
+}: { 
+  page: number; 
+  pageSize: number;
+  name?: string;
+  location?: string;
+  category?: string;
+}) {
+  const { providers, total } = await getProvidersList(page, pageSize, name, location, category);
   
   if (providers.length === 0) {
     return (
@@ -245,6 +276,7 @@ async function ProvidersList({ page, pageSize }: { page: number; pageSize: numbe
             name={provider.name}
             heroImageUrl={provider.heroImageUrl}
             aboutSnippet={provider.aboutSnippet}
+            categories={provider.categories}
           />
         ))}
       </ResponsiveGrid>
@@ -254,7 +286,10 @@ async function ProvidersList({ page, pageSize }: { page: number; pageSize: numbe
           <PaginationControls 
             currentPage={page} 
             totalPages={Math.ceil(total / pageSize)} 
-            pageSize={pageSize} 
+            pageSize={pageSize}
+            name={name}
+            location={location}
+            category={category}
           />
         </div>
       )}
@@ -274,6 +309,11 @@ export default async function ListPage({ searchParams }: ListPageProps) {
   const pageSize = isNaN(parsedPageSize) || parsedPageSize < 1 ? 12 : 
                    parsedPageSize > 100 ? 100 : parsedPageSize;
   
+  // Get filter parameters
+  const name = params.name || '';
+  const location = params.location || '';
+  const category = params.category || '';
+  
   return (
     <div className="py-8 md:py-12">
       <ResponsiveContainer maxWidth="xl">
@@ -283,7 +323,13 @@ export default async function ListPage({ searchParams }: ListPageProps) {
         </div>
         
         <Suspense fallback={<div className="text-center py-12">Loading providers...</div>}>
-          <ProvidersList page={page} pageSize={pageSize} />
+          <ProvidersList 
+            page={page} 
+            pageSize={pageSize} 
+            name={name}
+            location={location}
+            category={category}
+          />
         </Suspense>
       </ResponsiveContainer>
     </div>
