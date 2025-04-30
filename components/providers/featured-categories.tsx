@@ -22,6 +22,7 @@ export function FeaturedCategories({ categories }: FeaturedCategoriesProps) {
       smCols={2}
       mdCols={3}
       lgCols={4}
+      xlCols={5}
       gap="6"
     >
       {categories.map((category) => (
@@ -31,13 +32,13 @@ export function FeaturedCategories({ categories }: FeaturedCategoriesProps) {
           className="block transition-transform hover:scale-[1.02]"
         >
           <Card className="h-full">
-            <CardContent className="flex flex-col items-center text-center p-6 space-y-4">
-              <div className="text-primary p-3 rounded-full bg-primary/10">
+            <CardContent className="flex flex-col items-center text-center p-4 space-y-3">
+              <div className="text-primary p-2 rounded-full bg-primary/10">
                 {category.icon}
               </div>
               <div>
-                <h3 className="font-medium text-lg mb-2">{category.name}</h3>
-                <p className="text-muted-foreground text-sm">{category.description}</p>
+                <h3 className="font-medium text-md mb-1">{category.name}</h3>
+                <p className="text-muted-foreground text-xs">{category.description}</p>
               </div>
             </CardContent>
           </Card>

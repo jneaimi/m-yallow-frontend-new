@@ -1,0 +1,176 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Grid2X2 
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Category {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  description: string;
+}
+
+interface CategoriesCarouselProps {
+  categories: Category[];
+  onViewAllClick: () => void;
+  className?: string;
+}
+
+export function CategoriesCarousel({ 
+  categories, 
+  onViewAllClick,
+  className 
+}: CategoriesCarouselProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Hook to track window size for responsive design
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 768
+  );
+  
+  // Handle window resize
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    // Initialize on mount
+    handleResize();
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  
+  // Number of categories to show per slide based on window width
+  const getItemsPerSlide = () => {
+    if (windowWidth >= 1280) return 6;      // xl - Extra large screens
+    if (windowWidth >= 1024) return 5;      // lg - Large screens
+    if (windowWidth >= 768) return 4;       // md - Medium screens
+    if (windowWidth >= 640) return 3;       // sm - Small screens
+    return 2;                               // xs - Mobile
+  };
+  
+  const itemsToShow = getItemsPerSlide();
+  
+  // Calculate the total number of slides
+  const totalSlides = Math.ceil(categories.length / itemsToShow);
+  
+  // Go to the next slide
+  const nextSlide = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === totalSlides - 1 ? 0 : prevIndex + 1
+    );
+  };
+  
+  // Go to the previous slide
+  const prevSlide = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? totalSlides - 1 : prevIndex - 1
+    );
+  };
+  
+  // Get the categories to display in the current slide
+  const displayCategories = () => {
+    const start = currentIndex * itemsToShow;
+    return categories.slice(start, start + itemsToShow);
+  };
+
+  // Generate indicator dots for the carousel
+  const renderIndicators = () => {
+    return Array.from({ length: totalSlides }).map((_, index) => (
+      <button
+        key={index}
+        className={cn(
+          "h-2 w-2 rounded-full mx-1 transition-all",
+          index === currentIndex ? "bg-primary" : "bg-gray-300"
+        )}
+        onClick={() => setCurrentIndex(index)}
+        aria-label={`Go to slide ${index + 1}`}
+      />
+    ));
+  };
+
+  return (
+    <div className={cn("relative", className)}>
+      {/* Carousel Controls */}
+      <div className="flex justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full h-9 w-9"
+            onClick={prevSlide}
+            aria-label="Previous categories"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full h-9 w-9"
+            onClick={nextSlide}
+            aria-label="Next categories"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+          <div className="mx-2 flex items-center">
+            {renderIndicators()}
+          </div>
+        </div>
+        
+        <Button 
+          variant="ghost" 
+          className="gap-2"
+          onClick={onViewAllClick}
+        >
+          <Grid2X2 className="h-4 w-4" />
+          <span>View All</span>
+        </Button>
+      </div>
+      
+      {/* Categories Display with smooth transition */}
+      <div className="overflow-hidden">
+        <div 
+          className={`grid gap-4 transition-all duration-300 ${
+            // Dynamically set grid columns based on items to show
+            windowWidth >= 1280 ? 'grid-cols-6' :
+            windowWidth >= 1024 ? 'grid-cols-5' :
+            windowWidth >= 768 ? 'grid-cols-4' : 
+            windowWidth >= 640 ? 'grid-cols-3' : 
+            'grid-cols-2'
+          }`}
+        >
+          {displayCategories().map((category) => (
+          <Link
+            key={category.id}
+            href={`/providers/category/${encodeURIComponent(category.id)}`}
+            className="block transition-transform hover:scale-[1.02]"
+          >
+            <Card className="h-full">
+              <CardContent className="flex flex-col items-center text-center p-3 space-y-2">
+                <div className="text-primary p-2 rounded-full bg-primary/10">
+                  {category.icon}
+                </div>
+                <h3 className="font-medium text-sm">{category.name}</h3>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+        </div>
+      </div>
+    </div>
+  );
+}

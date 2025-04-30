@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { SearchBar } from "@/components/providers/search-bar";
 import { ProviderCard } from "@/components/providers/provider-card";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/ui/responsive";
-import { PROVIDER_API, ApiProvider, Provider, transformProvider } from "@/lib/api/providers";
+import { PROVIDER_API, API_BASE_URL, ApiProvider, Provider, transformProvider } from "@/lib/api/providers";
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; category?: string }>;
@@ -14,13 +14,33 @@ interface SearchPageProps {
  * @param limit - Maximum number of results to return
  * @returns Array of providers matching the search criteria
  */
-async function searchProviders(query: string, limit: number = 20): Promise<Provider[]> {
-  // If no query is provided, list all providers instead, but still apply the limit
-  const apiEndpoint = query 
-    ? `${PROVIDER_API.SEARCH}?${new URLSearchParams({ query, limit: limit.toString() })}`
-    : `${PROVIDER_API.LIST}?${new URLSearchParams({ limit: limit.toString() })}`;
+async function searchProviders(query: string, categoryId?: string, limit: number = 20): Promise<Provider[]> {
+  // Build query parameters
+  const params: Record<string, string> = { limit: limit.toString() };
+  if (query) params.query = query;
   
-  console.log(`Fetching providers from: ${apiEndpoint}`);
+  // Try different parameter formats for category filtering
+  // The backend might be expecting one of these formats
+  if (categoryId) {
+    params.category_id = categoryId;     // Format 1: category_id=10
+    params.categoryId = categoryId;      // Format 2: categoryId=10
+    params.category = categoryId;        // Format 3: category=10
+  }
+  
+  // Determine the best endpoint to use
+  let apiEndpoint;
+  if (query) {
+    // If there's a search query, use the search endpoint
+    apiEndpoint = `${PROVIDER_API.SEARCH}?${new URLSearchParams(params)}`;
+  } else if (categoryId) {
+    // If there's only a category filter, use the public providers endpoint
+    apiEndpoint = `${PROVIDER_API.PUBLIC}?category=${categoryId}&limit=${limit}`;
+  } else {
+    // For general listing, use the public providers endpoint
+    apiEndpoint = `${PROVIDER_API.PUBLIC}?${new URLSearchParams({ limit: limit.toString() })}`;
+  }
+  
+  console.log(`Fetching providers from: ${apiEndpoint}${categoryId ? ` (Category ID: ${categoryId})` : ''}`);
   
   try {
     const res = await fetch(apiEndpoint, { next: { revalidate: 60 } });
@@ -34,6 +54,12 @@ async function searchProviders(query: string, limit: number = 20): Promise<Provi
     const data = await res.json();
     console.log(`API Response data structure:`, JSON.stringify(data, null, 2).substring(0, 500) + "...");
     
+    // Log the URL that was actually used for the request
+    console.log(`Actual request URL: ${res.url}`);
+    
+    // Debug: Log the entire response for API troubleshooting
+    console.log("Complete API response:", data);
+    
     // Handle different response formats
     let providers: ApiProvider[];
     
@@ -43,13 +69,40 @@ async function searchProviders(query: string, limit: number = 20): Promise<Provi
     } else if (data.providers && Array.isArray(data.providers)) {
       // Wrapped in a providers property
       providers = data.providers;
+    } else if (data.results && Array.isArray(data.results)) {
+      // Some APIs return results instead of providers
+      providers = data.results;
     } else {
       console.error("Unexpected API response format:", data);
-      throw new Error("Unexpected API response format");
+      
+      // Last resort fallback - look for any array in the response
+      const possibleArrays = Object.values(data).filter(val => Array.isArray(val));
+      if (possibleArrays.length > 0 && possibleArrays[0].length > 0) {
+        console.log("Found possible provider array in response:", possibleArrays[0]);
+        providers = possibleArrays[0] as ApiProvider[];
+      } else {
+        throw new Error("Unexpected API response format");
+      }
     }
     
     // Transform API providers to client provider format
-    return providers.map(transformProvider);
+    const transformedProviders = providers.map(transformProvider);
+    
+    // If categoryId is provided, try filtering on the client side as a fallback
+    if (categoryId) {
+      console.log(`Client-side filtering for category ID: ${categoryId}`);
+      const filteredProviders = transformedProviders.filter(provider => 
+        provider.categories?.some(cat => String(cat.id) === categoryId)
+      );
+      
+      console.log(`Original count: ${transformedProviders.length}, Filtered count: ${filteredProviders.length}`);
+      
+      if (filteredProviders.length > 0) {
+        return filteredProviders;
+      }
+    }
+    
+    return transformedProviders;
   } catch (error) {
     console.error('Error fetching providers:', error instanceof Error ? error.message : String(error));
     
@@ -77,9 +130,9 @@ async function searchProviders(query: string, limit: number = 20): Promise<Provi
   }
 }
 
-async function SearchResults({ query }: { query?: string }) {
+async function SearchResults({ query, categoryId }: { query?: string; categoryId?: string }) {
   // Always fetch providers - when query is empty, it will list all providers
-  const providers = await searchProviders(query || "");
+  const providers = await searchProviders(query || "", categoryId);
   
   if (providers.length === 0) {
     return (
@@ -99,6 +152,7 @@ async function SearchResults({ query }: { query?: string }) {
       <div className="mb-4 text-muted-foreground">
         Found {providers.length} provider{providers.length !== 1 ? 's' : ''}
         {query ? ` matching "${query}"` : ''}
+        {categoryId ? ` in this category` : ''}
       </div>
       
       <ResponsiveGrid
@@ -132,9 +186,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     
     console.log("Search page params:", { query, categoryId });
     
-    const title = query 
-      ? `Search results for "${query}"`
-      : "Browse Providers";
+    // Get title based on search parameters
+    let title = "Browse Providers";
+    if (query) {
+      title = `Search results for "${query}"`;
+    } else if (categoryId) {
+      title = `Category Filter Applied`;
+    }
     
     return (
       <div className="py-8 md:py-12">
@@ -156,7 +214,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </div>
             </div>
           }>
-            <SearchResults query={query} />
+            <SearchResults query={query} categoryId={categoryId} />
           </Suspense>
         </ResponsiveContainer>
       </div>

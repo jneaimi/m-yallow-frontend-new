@@ -2,8 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { RecentProviders } from "./providers/recent-providers";
 import { SearchBar } from "@/components/providers/search-bar";
-import { FeaturedCategories } from "@/components/providers/featured-categories";
-import { featuredCategories } from "@/components/providers/category-icons";
+import { HybridPublicCategories } from "./providers/hybrid-public-categories";
 import { ResponsiveContainer, ResponsiveStack } from "@/components/ui/responsive";
 import { Button } from "@/components/ui/button";
 
@@ -28,11 +27,13 @@ export default function Home() {
         </ResponsiveContainer>
       </section>
 
-      {/* Featured Categories */}
+      {/* Categories Section - New Hybrid Approach */}
       <section className="py-16">
         <ResponsiveContainer maxWidth="xl">
           <h2 className="text-3xl font-bold tracking-tight mb-8">Browse Categories</h2>
-          <FeaturedCategories categories={featuredCategories} />
+          <Suspense fallback={<div className="text-center py-8">Loading categories...</div>}>
+            <HybridPublicCategories />
+          </Suspense>
         </ResponsiveContainer>
       </section>
 

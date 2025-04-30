@@ -8,6 +8,7 @@ export const PROVIDER_API = {
   LIST: `${API_BASE_URL}/providers`,
   SEARCH: `${API_BASE_URL}/providers/search`,
   RECENT: `${API_BASE_URL}/providers/recent`,
+  PUBLIC: `${API_BASE_URL}/public/providers`,
   DETAIL: (id: string | number) => `${API_BASE_URL}/providers/${id}`,
   CONTACT: (id: string | number) => `${API_BASE_URL}/providers/${id}/contact`
 };
