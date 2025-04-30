@@ -9,10 +9,7 @@ import {
   DialogDescription,
   DialogClose
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
+import { CategoryCard } from "./category-card";
 
 interface Category {
   id: string;
@@ -94,42 +91,27 @@ export function CategoriesModal({ isOpen, onClose, categories }: CategoriesModal
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <div>
-            <DialogTitle className="text-2xl font-bold">All Categories</DialogTitle>
-            <DialogDescription>
-              Browse all available provider categories
-            </DialogDescription>
-          </div>
-          <DialogClose asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogClose>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto p-4 sm:p-6 w-[calc(100%-32px)] sm:w-auto">
+        <DialogHeader className="mb-2">
+          <DialogTitle className="text-xl sm:text-2xl font-bold leading-tight">All Categories</DialogTitle>
+          <DialogDescription className="text-sm mt-1 max-w-full">
+            Browse all available provider categories
+          </DialogDescription>
         </DialogHeader>
         
-        <div className="py-4">
+        <div className="py-2 sm:py-4">
           {Object.entries(categoriesByGroup).map(([groupName, groupCategories]) => (
-            <div key={groupName} className="mb-8">
-              <h3 className="text-lg font-medium mb-4 pb-2 border-b">{groupName}</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div key={groupName} className="mb-5 sm:mb-8">
+              <h3 className="text-base sm:text-lg font-medium mb-3 pb-2 border-b">{groupName}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {groupCategories.map(category => (
-                  <Link
+                  <CategoryCard
                     key={category.id}
-                    href={`/providers/category/${encodeURIComponent(category.id)}`}
-                    className="block transition-transform hover:scale-[1.02]"
+                    id={category.id}
+                    name={category.name}
+                    icon={category.icon}
                     onClick={onClose}
-                  >
-                    <Card className="h-full">
-                      <CardContent className="flex flex-row items-center p-3 gap-3">
-                        <div className="text-primary p-1 rounded-full bg-primary/10 flex-shrink-0">
-                          {category.icon}
-                        </div>
-                        <h4 className="font-medium text-sm">{category.name}</h4>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                  />
                 ))}
               </div>
             </div>
