@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronLeft, 
-  ChevronRight, 
-  Grid2X2 
+  ChevronRight
 } from "lucide-react";
+import { ViewAllCategoriesButton } from "./view-all-categories-button";
 import { cn } from "@/lib/utils";
 
 interface Category {
@@ -106,8 +106,8 @@ export function CategoriesCarousel({
   return (
     <div className={cn("relative", className)}>
       {/* Carousel Controls */}
-      <div className="flex justify-between mb-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between mb-4">
+        <div className="flex items-center gap-2 mb-2 sm:mb-0">
           <Button 
             variant="outline" 
             size="icon" 
@@ -131,14 +131,10 @@ export function CategoriesCarousel({
           </div>
         </div>
         
-        <Button 
-          variant="ghost" 
-          className="gap-2"
-          onClick={onViewAllClick}
-        >
-          <Grid2X2 className="h-4 w-4" />
-          <span>View All</span>
-        </Button>
+        <ViewAllCategoriesButton 
+          onViewAllClick={onViewAllClick}
+          totalCategories={categories.length}
+        />
       </div>
       
       {/* Categories Display with smooth transition */}
