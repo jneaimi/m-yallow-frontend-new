@@ -3,8 +3,8 @@
 // Model
 import { useSettingsModel } from './model/settings-model';
 
-// Controller 
-import { SettingsAuthController } from './auth/settings-auth-controller';
+// Controller functions
+import { checkAuthentication, isLoading } from './auth/settings-auth-controller';
 
 // UI Components (Presenters)
 import { SettingsLoading } from './ui/settings-loading';
@@ -22,12 +22,12 @@ export function SettingsPageClient() {
   // Perform early authentication check - redirect and return null if not authenticated
   // This prevents the UI flash before redirect
   if (isAuthLoaded && !isSignedIn) {
-    SettingsAuthController.checkAuthentication(isAuthLoaded, isSignedIn);
+    checkAuthentication(isAuthLoaded, isSignedIn);
     return null; // Stop rendering immediately
   }
   
   // Handle loading state
-  if (!isAuthLoaded || isUserLoading) {
+  if (isLoading(isAuthLoaded, isUserLoading)) {
     return <SettingsLoading />;
   }
   

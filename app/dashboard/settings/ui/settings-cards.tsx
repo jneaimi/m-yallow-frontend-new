@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { UserSettingsForm } from '../user-settings-form';
 import { ClerkManageAccountButton } from '@/components/auth/clerk-manage-account-button';
 import { DataSourceToggle } from '@/components/ui/data-source-toggle';
+import { UserProfile } from '@/lib/api/user-profile/client';
 
 interface DeveloperCardProps {
-  user: any;
+  user: UserProfile | null;
 }
 
 /**

@@ -7,6 +7,19 @@ import { toast } from "sonner";
 import { userContextConfig, UserDataSource } from './user-context-config';
 import { withOfflineHandling } from '@/lib/offline-handling';
 
+// Helper function to convert Clerk user to UserProfile
+const mapClerkUserToProfile = (clerkUser: any): UserProfile => {
+  return {
+    id: clerkUser.id,
+    email: clerkUser.primaryEmailAddress?.emailAddress || '',
+    first_name: clerkUser.firstName || '',
+    last_name: clerkUser.lastName || '',
+    avatar_url: clerkUser.imageUrl || null,
+    created_at: clerkUser.createdAt?.toISOString() || new Date().toISOString(),
+    updated_at: clerkUser.updatedAt?.toISOString() || new Date().toISOString(),
+  };
+};
+
 type UserContextType = {
   user: UserProfile | null;
   isLoading: boolean;
@@ -72,15 +85,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (dataSource === 'backend') {
       try {
         // Use offline handling with fallback to Clerk data
-        const clerkFallbackData = clerkUser ? {
-          id: clerkUser.id,
-          email: clerkUser.primaryEmailAddress?.emailAddress || '',
-          first_name: clerkUser.firstName || '',
-          last_name: clerkUser.lastName || '',
-          avatar_url: clerkUser.imageUrl || null,
-          created_at: clerkUser.createdAt?.toISOString() || new Date().toISOString(),
-          updated_at: clerkUser.updatedAt?.toISOString() || new Date().toISOString(),
-        } : null;
+        const clerkFallbackData = clerkUser ? mapClerkUserToProfile(clerkUser) : null;
         
         const fetchedProfile = await withOfflineHandling(
           async () => await profileClient.getUserProfile(),
@@ -113,15 +118,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         
         // Fallback to Clerk data if backend fails
         if (clerkUser) {
-          const clerkData: UserProfile = {
-            id: clerkUser.id,
-            email: clerkUser.primaryEmailAddress?.emailAddress || '',
-            first_name: clerkUser.firstName || '',
-            last_name: clerkUser.lastName || '',
-            avatar_url: clerkUser.imageUrl || null,
-            created_at: clerkUser.createdAt?.toISOString() || new Date().toISOString(),
-            updated_at: clerkUser.updatedAt?.toISOString() || new Date().toISOString(),
-          };
+          const clerkData: UserProfile = mapClerkUserToProfile(clerkUser);
           setUser(clerkData);
           return clerkData;
         }
@@ -131,15 +128,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } else {
       // Use Clerk data directly
       if (clerkUser) {
-        const clerkData: UserProfile = {
-          id: clerkUser.id,
-          email: clerkUser.primaryEmailAddress?.emailAddress || '',
-          first_name: clerkUser.firstName || '',
-          last_name: clerkUser.lastName || '',
-          avatar_url: clerkUser.imageUrl || null,
-          created_at: clerkUser.createdAt?.toISOString() || new Date().toISOString(),
-          updated_at: clerkUser.updatedAt?.toISOString() || new Date().toISOString(),
-        };
+        const clerkData: UserProfile = mapClerkUserToProfile(clerkUser);
         setUser(clerkData);
         setIsLoading(false);
         return clerkData;
