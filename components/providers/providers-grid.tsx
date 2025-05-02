@@ -8,7 +8,9 @@ interface Provider {
   id: number;
   name: string;
   heroImageUrl: string;
-  aboutSnippet: string;
+  aboutSnippet?: string;
+  city?: string;
+  state?: string;
   categories?: Category[];
 }
 
@@ -27,6 +29,8 @@ export function ProvidersGrid({ providers }: ProvidersGridProps) {
           heroImageUrl={provider.heroImageUrl}
           aboutSnippet={provider.aboutSnippet}
           categories={provider.categories}
+          city={provider.city}
+          state={provider.state}
         />
       ))}
     </ResponsiveGrid>

@@ -8,6 +8,10 @@ import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { SkipLink } from "@/components/skip-link";
 import { LiveRegion } from "@/components/a11y/live-region";
+import { UserProvider } from "@/lib/context/user-context";
+import { NetworkProvider } from "@/lib/network-context";
+import { OfflineIndicator } from "@/components/ui/offline-indicator";
+import { ClientDebugPanel } from "@/components/dev/client-debug-panel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,30 +65,40 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
       >
         <ClerkProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {/* Screen reader announcements live region */}
-            <LiveRegion id="a11y-announcer" politeness="polite" />
+          <NetworkProvider>
+            <UserProvider>
+              <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+                {/* Screen reader announcements live region */}
+                <LiveRegion id="a11y-announcer" politeness="polite" />
 
-            {/* Authentication-specific announcer */}
-            <LiveRegion id="a11y-announcer-assertive" politeness="assertive" />
+                {/* Authentication-specific announcer */}
+                <LiveRegion id="a11y-announcer-assertive" politeness="assertive" />
 
-            {/* Skip link for keyboard users */}
-            <SkipLink />
+                {/* Skip link for keyboard users */}
+                <SkipLink />
 
-            {/* Accessible toast notifications */}
-            <Toaster />
+                {/* Accessible toast notifications */}
+                <Toaster />
 
-            {/* Header with landmark role */}
-            <Header />
+                {/* Offline status indicator */}
+                <OfflineIndicator />
 
-            {/* Main content with id for skip link target */}
-            <main id="main-content" className="flex-1" tabIndex={-1}>
-              {children}
-            </main>
+                {/* Development-only debug panel */}
+                {process.env.NODE_ENV === 'development' && <ClientDebugPanel />}
 
-            {/* Footer with landmark role */}
-            <Footer />
-          </ThemeProvider>
+                {/* Header with landmark role */}
+                <Header />
+
+                {/* Main content with id for skip link target */}
+                <main id="main-content" className="flex-1" tabIndex={-1}>
+                  {children}
+                </main>
+
+                {/* Footer with landmark role */}
+                <Footer />
+              </ThemeProvider>
+            </UserProvider>
+          </NetworkProvider>
         </ClerkProvider>
       </body>
     </html>

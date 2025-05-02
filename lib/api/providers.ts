@@ -1,4 +1,4 @@
-import { getProviderHeroImageUrl } from "@/lib/image-utils";
+import { getProviderHeroImageUrl, getFallbackImageUrl } from "@/lib/image-utils";
 
 // API Base URL
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -7,9 +7,9 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost
 export const PROVIDER_API = {
   LIST: `${API_BASE_URL}/providers`,
   SEARCH: `${API_BASE_URL}/providers/search`,
-  RECENT: `${API_BASE_URL}/providers/recent`,
+  RECENT: `${API_BASE_URL}/public/providers/recent`, // Corrected path
   PUBLIC: `${API_BASE_URL}/public/providers`,
-  DETAIL: (id: string | number) => `${API_BASE_URL}/providers/${id}`,
+  DETAIL: (id: string | number) => `${API_BASE_URL}/public/providers/${id}`, // Use public endpoint
   CONTACT: (id: string | number) => `${API_BASE_URL}/providers/${id}/contact`
 };
 
