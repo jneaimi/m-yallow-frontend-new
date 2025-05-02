@@ -1,9 +1,7 @@
-import { getAuthToken } from './auth';
 import axios from 'axios';
 
-export async function createApiClient() {
-  const token = await getAuthToken();
-  
+// Server-side API client creator
+export async function createApiClient(token?: string) {
   return axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
     headers: {
@@ -13,7 +11,7 @@ export async function createApiClient() {
   });
 }
 
-// Client-side version using Clerk's useAuth hook
+// Client-side API client creator
 export function createClientApiClient(token?: string) {
   return axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',

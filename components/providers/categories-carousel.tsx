@@ -32,22 +32,18 @@ export function CategoriesCarousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   
   // Hook to track window size for responsive design
-  const [windowWidth, setWindowWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 768
-  );
+  const [windowWidth, setWindowWidth] = useState(0);
   
   // Handle window resize
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
+    // Set initial window width only on client-side
+    setWindowWidth(window.innerWidth);
     
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
     
     window.addEventListener('resize', handleResize);
-    
-    // Initialize on mount
-    handleResize();
     
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -56,6 +52,9 @@ export function CategoriesCarousel({
   
   // Number of categories to show per slide based on window width
   const getItemsPerSlide = () => {
+    // During SSR or initial render, default to a reasonable value
+    if (windowWidth === 0) return 4;
+    
     if (windowWidth >= 1280) return 6;      // xl - Extra large screens
     if (windowWidth >= 1024) return 5;      // lg - Large screens
     if (windowWidth >= 768) return 4;       // md - Medium screens
@@ -88,21 +87,6 @@ export function CategoriesCarousel({
     return categories.slice(start, start + itemsToShow);
   };
 
-  // Generate indicator dots for the carousel
-  const renderIndicators = () => {
-    return Array.from({ length: totalSlides }).map((_, index) => (
-      <button
-        key={index}
-        className={cn(
-          "h-2 w-2 rounded-full mx-1 transition-all",
-          index === currentIndex ? "bg-primary" : "bg-gray-300"
-        )}
-        onClick={() => setCurrentIndex(index)}
-        aria-label={`Go to slide ${index + 1}`}
-      />
-    ));
-  };
-
   return (
     <div className={cn("relative", className)}>
       {/* Carousel Controls */}
@@ -127,7 +111,20 @@ export function CategoriesCarousel({
             <ChevronRight className="h-5 w-5" />
           </Button>
           <div className="mx-2 flex items-center">
-            {renderIndicators()}
+            {/* Client-side only: Render indicators after hydration */}
+            {typeof window !== 'undefined' && windowWidth > 0 && 
+              Array.from({ length: totalSlides }).map((_, index) => (
+                <button
+                  key={index}
+                  className={cn(
+                    "h-2 w-2 rounded-full mx-1 transition-all",
+                    index === currentIndex ? "bg-primary" : "bg-gray-300"
+                  )}
+                  onClick={() => setCurrentIndex(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))
+            }
           </div>
         </div>
         
@@ -140,14 +137,7 @@ export function CategoriesCarousel({
       {/* Categories Display with smooth transition */}
       <div className="overflow-hidden">
         <div 
-          className={`grid gap-4 transition-all duration-300 ${
-            // Dynamically set grid columns based on items to show
-            windowWidth >= 1280 ? 'grid-cols-6' :
-            windowWidth >= 1024 ? 'grid-cols-5' :
-            windowWidth >= 768 ? 'grid-cols-4' : 
-            windowWidth >= 640 ? 'grid-cols-3' : 
-            'grid-cols-2'
-          }`}
+          className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 transition-all duration-300`}
         >
           {displayCategories().map((category) => (
           <Link

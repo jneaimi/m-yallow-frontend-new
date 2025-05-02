@@ -1,16 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
+// This file re-exports auth functions for convenience
+// For server components, import from './server'
+// For client components, import from './client'
 
-/**
- * Retrieves the current user's authentication token for use in API requests.
- * @returns {Promise<string | null>} The authentication token or null if not available.
- * @throws {Error} If there's an issue retrieving the token.
- */
-export async function getAuthToken(): Promise<string | null> {
-  const { getToken } = auth();
-  try {
-    return await getToken();
-  } catch (error) {
-    console.error('Failed to retrieve auth token:', error);
-    throw error;
-  }
-}
+// Server-side auth is re-exported for use in server components only
+export { getAuthToken } from './server';
+
+// Client-side auth is not re-exported here to avoid accidental imports
+// in server components. Import directly from './client' in client components
