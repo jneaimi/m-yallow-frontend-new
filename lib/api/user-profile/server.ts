@@ -9,18 +9,11 @@ export const USER_PROFILE_API = {
 export interface UserProfile {
   id: string;
   email: string;
-  displayName?: string;
-  preferences?: {
-    notifications: {
-      email: boolean;
-      app: boolean;
-    };
-    privacy: {
-      showReviews: boolean;
-    };
-  };
-  createdAt: string;
-  updatedAt: string;
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -40,6 +33,6 @@ export async function getUserProfile(): Promise<UserProfile> {
  */
 export async function updateUserProfile(data: Partial<UserProfile>): Promise<UserProfile> {
   const apiClient = await createServerApiClient();
-  const response = await apiClient.put(USER_PROFILE_API.UPDATE_PROFILE, data);
+  const response = await apiClient.patch(USER_PROFILE_API.UPDATE_PROFILE, data);
   return response.data;
 }

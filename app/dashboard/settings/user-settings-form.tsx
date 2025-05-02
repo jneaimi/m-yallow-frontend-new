@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,9 +17,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { toast } from "sonner";
-import { useUserProfile } from '@/hooks/use-user-profile';
 import { Loader2 } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/lib/context/user-context';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const settingsSchema = z.object({
   displayName: z.string().min(2, {
@@ -27,6 +27,12 @@ const settingsSchema = z.object({
   }).max(50, {
     message: 'Display name must not exceed 50 characters.',
   }).optional(),
+  first_name: z.string().min(1, {
+    message: 'First name is required.',
+  }).max(50).optional(),
+  last_name: z.string().min(1, {
+    message: 'Last name is required.',
+  }).max(50).optional(),
   emailNotifications: z.boolean().default(true),
   appNotifications: z.boolean().default(true),
   showReviews: z.boolean().default(true),
@@ -36,23 +42,40 @@ type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export function UserSettingsForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { profile, updateProfile, isLoading } = useUserProfile();
-  const { user } = useUser();
-
+  const { user, isLoading, updateUser } = useUser();
+  
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      displayName: profile?.displayName || user?.fullName || '',
-      emailNotifications: profile?.preferences?.notifications?.email ?? true,
-      appNotifications: profile?.preferences?.notifications?.app ?? true,
-      showReviews: profile?.preferences?.privacy?.showReviews ?? true,
+      displayName: user?.displayName || '',
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      emailNotifications: user?.preferences?.notifications?.email ?? true,
+      appNotifications: user?.preferences?.notifications?.app ?? true,
+      showReviews: user?.preferences?.privacy?.showReviews ?? true,
     },
   });
+  
+  // Update form when user data changes - more efficiently
+  useEffect(() => {
+    if (user && !form.formState.isDirty) {
+      form.reset({
+        displayName: user.displayName || '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        emailNotifications: user.preferences?.notifications?.email ?? true,
+        appNotifications: user.preferences?.notifications?.app ?? true,
+        showReviews: user.preferences?.privacy?.showReviews ?? true,
+      });
+    }
+  }, [user, form]);
 
   async function onSubmit(data: SettingsFormValues) {
     setIsSubmitting(true);
     try {
-      await updateProfile({
+      await updateUser({
+        first_name: data.first_name,
+        last_name: data.last_name,
         displayName: data.displayName,
         preferences: {
           notifications: {
@@ -77,8 +100,7 @@ export function UserSettingsForm() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading your settings...</span>
+        <LoadingSpinner text="Loading your settings..." />
       </div>
     );
   }
@@ -86,6 +108,36 @@ export function UserSettingsForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your first name" {...field} value={field.value || ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your last name" {...field} value={field.value || ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="displayName"
@@ -175,8 +227,12 @@ export function UserSettingsForm() {
         </div>
 
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save Settings
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : "Save Settings"}
         </Button>
       </form>
     </Form>

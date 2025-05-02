@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
-import { BookmarkedProviders } from '@/components/bookmarks/bookmarked-providers';
 import { BookmarksDisplay } from './bookmarks-display';
 
 export default async function BookmarksPage() {
