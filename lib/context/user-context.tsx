@@ -5,7 +5,6 @@ import { useAuth, useUser as useClerkUser } from '@clerk/nextjs';
 import { UserProfile, useUserProfileClient } from '@/lib/api/user-profile/client';
 import { toast } from "sonner";
 import { userContextConfig, UserDataSource } from './user-context-config';
-import { useNetworkState } from '@/lib/network-context';
 import { withOfflineHandling } from '@/lib/offline-handling';
 
 type UserContextType = {

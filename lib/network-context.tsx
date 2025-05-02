@@ -2,6 +2,18 @@
 
 import { useEffect, useState, createContext, useContext, ReactNode } from 'react';
 
+// Define the NetworkInformation interface that's missing from the standard TypeScript types
+interface NetworkInformation extends EventTarget {
+  downlink: number;
+  effectiveType: '2g' | '3g' | '4g' | 'slow-2g';
+  rtt: number;
+  saveData: boolean;
+  onchange: EventListener;
+}
+
+// Define a type for Navigator with connection property
+type NavigatorWithConnection = Navigator & { connection: NetworkInformation };
+
 export type NetworkState = 'online' | 'offline' | 'slow' | 'fast';
 
 interface NetworkContextType {
@@ -46,8 +58,8 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
       window.addEventListener('offline', handleOffline);
       
       // Performance monitoring
-      if ('connection' in navigator && (navigator as any).connection) {
-        const connection = (navigator as any).connection;
+      if ('connection' in navigator && (navigator as NavigatorWithConnection).connection) {
+        const connection = (navigator as NavigatorWithConnection).connection;
         
         const updateConnectionQuality = () => {
           if (!navigator.onLine) {
