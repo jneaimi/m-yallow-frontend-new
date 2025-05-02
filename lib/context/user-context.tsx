@@ -2,24 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useAuth, useUser as useClerkUser } from '@clerk/nextjs';
+import { User as ClerkUser } from '@clerk/nextjs/server';
 import { UserProfile, useUserProfileClient } from '@/lib/api/user-profile/client';
 import { toast } from "sonner";
 import { userContextConfig, UserDataSource } from './user-context-config';
 import { withOfflineHandling } from '@/lib/offline-handling';
 
-// Helper function to convert Clerk user to UserProfile
-const mapClerkUserToProfile = (clerkUser: any): UserProfile => {
-  return {
-    id: clerkUser.id,
-    email: clerkUser.primaryEmailAddress?.emailAddress || '',
-    first_name: clerkUser.firstName || '',
-    last_name: clerkUser.lastName || '',
-    avatar_url: clerkUser.imageUrl || null,
-    created_at: clerkUser.createdAt?.toISOString() || new Date().toISOString(),
-    updated_at: clerkUser.updatedAt?.toISOString() || new Date().toISOString(),
-  };
-};
-
+// Types
 type UserContextType = {
   user: UserProfile | null;
   isLoading: boolean;
@@ -30,9 +19,43 @@ type UserContextType = {
   currentDataSource: UserDataSource;
 };
 
+type FetchOptions = {
+  force?: boolean;
+};
+
+type UpdateOptions = {
+  syncWithClerk?: boolean;
+  syncWithBackend?: boolean;
+};
+
+// Helper functions - separated for better modularity
+const userMappers = {
+  // Helper function to convert Clerk user to UserProfile
+  mapClerkUserToProfile: (clerkUser: ClerkUser): UserProfile => {
+    return {
+      id: clerkUser.id,
+      email: clerkUser.primaryEmailAddress?.emailAddress || '',
+      first_name: clerkUser.firstName || '',
+      last_name: clerkUser.lastName || '',
+      avatar_url: clerkUser.imageUrl || null,
+      created_at: clerkUser.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: clerkUser.updatedAt?.toISOString() || new Date().toISOString(),
+    };
+  }
+};
+
+// Constants
+const FETCH_CONSTANTS = {
+  MIN_FETCH_INTERVAL: 2000, // Minimum 2 seconds between API calls
+  MIN_AUTO_REFRESH_INTERVAL: 30000, // Minimum 30 seconds for auto-refresh
+};
+
+// Create context
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// Provider component
 export function UserProvider({ children }: { children: ReactNode }) {
+  // State
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,20 +63,58 @@ export function UserProvider({ children }: { children: ReactNode }) {
     userContextConfig.get().dataSource
   );
   
+  // Hooks
   const { isSignedIn, isLoaded } = useAuth();
   const { user: clerkUser } = useClerkUser();
   const profileClient = useUserProfileClient();
   
-  // Ref for storing the auto-refresh interval
+  // Refs
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Add debounce timer to prevent multiple rapid API calls
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastFetchTimeRef = useRef<number>(0);
-  const MIN_FETCH_INTERVAL = 2000; // Minimum 2 seconds between API calls
+  const initialFetchCompleteRef = useRef<boolean>(false);
+
+  // Fetch user from backend
+  const fetchFromBackend = useCallback(async (): Promise<UserProfile | null> => {
+    try {
+      // Use offline handling with fallback to Clerk data
+      const clerkFallbackData = clerkUser ? userMappers.mapClerkUserToProfile(clerkUser) : null;
+      
+      const fetchedProfile = await withOfflineHandling(
+        async () => await profileClient.getUserProfile(),
+        {
+          retries: 2,
+          onOffline: () => {
+            toast.warning("You're offline. Using cached user data.");
+          },
+          fallback: clerkFallbackData
+        }
+      );
+      
+      if (fetchedProfile) {
+        return fetchedProfile;
+      } else if (clerkUser && !fetchedProfile) {
+        // If offline handling returned null but we have Clerk data
+        return clerkFallbackData;
+      }
+      
+      return null;
+    } catch (err) {
+      console.error('Failed to fetch user profile from backend:', err);
+      throw new Error('Failed to load your profile');
+    }
+  }, [profileClient, clerkUser]);
+
+  // Get user from Clerk
+  const fetchFromClerk = useCallback((): UserProfile | null => {
+    if (clerkUser) {
+      return userMappers.mapClerkUserToProfile(clerkUser);
+    }
+    return null;
+  }, [clerkUser]);
 
   // Function to fetch user profile from our backend with debouncing
-  const fetchUser = useCallback(async (force = false): Promise<UserProfile | null> => {
+  const fetchUser = useCallback(async ({ force = false }: FetchOptions = {}): Promise<UserProfile | null> => {
     if (!isSignedIn) {
       setUser(null);
       setIsLoading(false);
@@ -62,7 +123,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     // Don't fetch if we recently fetched unless force is true
     const now = Date.now();
-    if (!force && now - lastFetchTimeRef.current < MIN_FETCH_INTERVAL) {
+    if (!force && now - lastFetchTimeRef.current < FETCH_CONSTANTS.MIN_FETCH_INTERVAL) {
       return user;
     }
 
@@ -82,65 +143,82 @@ export function UserProvider({ children }: { children: ReactNode }) {
     // Set last fetch time
     lastFetchTimeRef.current = now;
     
-    if (dataSource === 'backend') {
-      try {
-        // Use offline handling with fallback to Clerk data
-        const clerkFallbackData = clerkUser ? mapClerkUserToProfile(clerkUser) : null;
-        
-        const fetchedProfile = await withOfflineHandling(
-          async () => await profileClient.getUserProfile(),
-          {
-            retries: 2,
-            onOffline: () => {
-              toast.warning("You're offline. Using cached user data.");
-            },
-            fallback: clerkFallbackData
+    try {
+      let userData: UserProfile | null = null;
+      
+      if (dataSource === 'backend') {
+        try {
+          userData = await fetchFromBackend();
+        } catch (err) {
+          console.error('Failed to fetch user profile from backend:', err);
+          setError((err as Error).message);
+          
+          // Fallback to Clerk data if backend fails
+          userData = fetchFromClerk();
+          
+          // If fallback was successful, clear error state and show info toast
+          if (userData) {
+            setError(null); // Clear error state since we have a fallback
+            toast.info('Using local profile data while we reconnect to our services');
           }
-        );
-        
-        if (fetchedProfile) {
-          setUser(fetchedProfile);
-          setIsLoading(false);
-          return fetchedProfile;
-        } else if (clerkUser && !fetchedProfile) {
-          // If offline handling returned null but we have Clerk data
-          setUser(clerkFallbackData);
-          setIsLoading(false);
-          return clerkFallbackData;
         }
-        
-        setIsLoading(false);
-        return null;
-      } catch (err) {
-        console.error('Failed to fetch user profile from backend:', err);
-        setError('Failed to load your profile');
-        setIsLoading(false);
-        
-        // Fallback to Clerk data if backend fails
-        if (clerkUser) {
-          const clerkData: UserProfile = mapClerkUserToProfile(clerkUser);
-          setUser(clerkData);
-          return clerkData;
-        }
-        
-        return null;
-      }
-    } else {
-      // Use Clerk data directly
-      if (clerkUser) {
-        const clerkData: UserProfile = mapClerkUserToProfile(clerkUser);
-        setUser(clerkData);
-        setIsLoading(false);
-        return clerkData;
+      } else {
+        // Use Clerk data directly
+        userData = fetchFromClerk();
       }
       
+      setUser(userData);
+      setIsLoading(false);
+      return userData;
+    } catch (err) {
+      setError((err as Error).message || 'An error occurred');
       setIsLoading(false);
       return null;
     }
-  }, [isSignedIn, dataSource, profileClient, clerkUser]);
+  }, [isSignedIn, dataSource, fetchFromBackend, fetchFromClerk, user]);
+
+  // Update user in backend
+  const updateBackendUser = useCallback(async (data: Partial<UserProfile>): Promise<UserProfile | null> => {
+    try {
+      // Use offline handling for the update
+      return await withOfflineHandling(
+        async () => await profileClient.updateUserProfile(data),
+        {
+          retries: 2,
+          onOffline: () => {
+            toast.error("You're offline. Changes will be saved when you're back online.");
+            // Create a synchronization queue here if needed for offline-first functionality
+          },
+          fallback: null
+        }
+      );
+    } catch (err) {
+      console.error('Failed to update profile in backend:', err);
+      throw new Error('Failed to update profile');
+    }
+  }, [profileClient]);
+
+  // Update user in Clerk
+  const updateClerkUser = useCallback(async (data: Partial<UserProfile>): Promise<boolean> => {
+    if (!clerkUser) return false;
+    
+    try {
+      await clerkUser.update({
+        firstName: data.first_name || undefined,
+        lastName: data.last_name || undefined,
+      });
+      return true;
+    } catch (err) {
+      console.error('Failed to update Clerk profile:', err);
+      throw new Error('Failed to update Clerk profile');
+    }
+  }, [clerkUser]);
 
   // Function to update user profile
-  const updateUser = useCallback(async (data: Partial<UserProfile>): Promise<UserProfile | null> => {
+  const updateUser = useCallback(async (
+    data: Partial<UserProfile>, 
+    options: UpdateOptions = {}
+  ): Promise<UserProfile | null> => {
     if (!isSignedIn) {
       toast.info('Please sign in to update your profile');
       return null;
@@ -158,120 +236,71 @@ export function UserProvider({ children }: { children: ReactNode }) {
       toast.error('Failed to update your profile. Changes have been reverted.');
     };
     
-    if (dataSource === 'backend') {
-      try {
-        // Use offline handling for the update
-        const updatedProfile = await withOfflineHandling(
-          async () => await profileClient.updateUserProfile(data),
-          {
-            retries: 2,
-            onOffline: () => {
-              toast.error("You're offline. Changes will be saved when you're back online.");
-              // Create a synchronization queue here if needed for offline-first functionality
-            },
-            fallback: null
-          }
-        );
+    try {
+      let updatedProfile: UserProfile | null = null;
+      
+      if (dataSource === 'backend') {
+        // Primary update in backend
+        updatedProfile = await updateBackendUser(data);
         
-        // If the update was successful
-        if (updatedProfile) {
-          setUser(updatedProfile);
-          toast.success('Your profile has been updated successfully.');
-          
-          // Sync with Clerk if configured
-          if (userContextConfig.get().syncOnUpdate && clerkUser) {
-            try {
-              await clerkUser.update({
-                firstName: data.first_name || undefined,
-                lastName: data.last_name || undefined,
-              });
-            } catch (err) {
-              console.error('Failed to sync data with Clerk:', err);
-              // Don't fail the operation if Clerk sync fails
-            }
+        // Sync with Clerk if configured
+        const shouldSyncWithClerk = options.syncWithClerk ?? userContextConfig.get().syncOnUpdate;
+        if (shouldSyncWithClerk && updatedProfile) {
+          try {
+            await updateClerkUser(data);
+          } catch (err) {
+            console.error('Failed to sync data with Clerk:', err);
+            // Don't fail the operation if Clerk sync fails
           }
-          
-          return updatedProfile;
-        } else {
-          // If offline handling returned null, keep optimistic update
-          // This would be the place to queue the changes for later synchronization
-          return null;
         }
-      } catch (err) {
-        console.error('Failed to update profile:', err);
-        // Revert the optimistic update
-        rollback();
-        return null;
-      }
-    } else {
-      // Update Clerk data directly
-      if (clerkUser) {
-        try {
-          await clerkUser.update({
-            firstName: data.first_name || undefined,
-            lastName: data.last_name || undefined,
-          });
-          
-          toast.success('Your profile has been updated successfully.');
-          
-          // Sync with backend if configured
-          if (userContextConfig.get().syncOnUpdate) {
-            try {
-              // Use offline handling for the backend sync
-              await withOfflineHandling(
-                async () => await profileClient.updateUserProfile(data),
-                {
-                  retries: 1,
-                  onOffline: () => {
-                    toast.warning("You're offline. Backend synchronization will happen when you're back online.");
-                  }
-                }
-              );
-            } catch (err) {
-              console.error('Failed to sync data with backend:', err);
-              // Don't fail the operation if backend sync fails
-            }
+      } else {
+        // Primary update in Clerk
+        const success = await updateClerkUser(data);
+        
+        // Sync with backend if configured
+        const shouldSyncWithBackend = options.syncWithBackend ?? userContextConfig.get().syncOnUpdate;
+        if (shouldSyncWithBackend && success) {
+          try {
+            updatedProfile = await updateBackendUser(data);
+          } catch (err) {
+            console.error('Failed to sync data with backend:', err);
+            // Don't fail the operation if backend sync fails
           }
-          
+        }
+        
+        // If Clerk update was successful but no backend update
+        if (success && !updatedProfile) {
           // Refresh user data to get updated values
-          return fetchUser();
-        } catch (err) {
-          console.error('Failed to update Clerk profile:', err);
-          // Revert the optimistic update
-          rollback();
-          return null;
+          updatedProfile = await fetchUser({ force: true });
         }
       }
       
-      toast.error('User not found. Please sign in again.');
+      if (updatedProfile) {
+        setUser(updatedProfile);
+        toast.success('Your profile has been updated successfully.');
+        return updatedProfile;
+      } else {
+        // Revert the optimistic update if we have no confirmation
+        rollback();
+        return null;
+      }
+    } catch (err) {
+      console.error('Failed to update profile:', err);
       rollback();
       return null;
     }
-  }, [isSignedIn, dataSource, profileClient, clerkUser, fetchUser]);
+  }, [isSignedIn, dataSource, user, updateBackendUser, updateClerkUser, fetchUser]);
 
   // Function to change data source
   const changeDataSource = useCallback((source: UserDataSource) => {
     setDataSource(source);
     userContextConfig.update({ dataSource: source });
     // Refetch user data when source changes
-    fetchUser();
+    fetchUser({ force: true });
   }, [fetchUser]);
 
-  // Initial fetch when auth state is loaded - with state tracking to prevent multiple fetches
-  const initialFetchCompleteRef = useRef<boolean>(false);
-  
-  useEffect(() => {
-    if (isLoaded && isSignedIn && !initialFetchCompleteRef.current) {
-      initialFetchCompleteRef.current = true;
-      fetchUser(true); // Force fetch on initial load
-    } else if (isLoaded && !isSignedIn) {
-      setUser(null);
-      setIsLoading(false);
-    }
-  }, [isLoaded, isSignedIn, fetchUser]);
-
-  // Setup auto-refresh if configured - with more conservative approach
-  useEffect(() => {
+  // Setup auto-refresh if configured
+  const setupAutoRefresh = useCallback(() => {
     const config = userContextConfig.get();
     
     // Clear any existing interval
@@ -280,13 +309,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
       refreshIntervalRef.current = null;
     }
     
-    // Only set up auto-refresh if:
-    // 1. It's configured
-    // 2. User is signed in
-    // 3. We're in active tab (using visibility API)
+    // Only set up auto-refresh if configured and user is signed in
     if (config.autoRefreshInterval && isSignedIn) {
-      // Use a higher interval (30 seconds minimum)
-      const safeInterval = Math.max(config.autoRefreshInterval, 30000);
+      // Use a higher interval (minimum 30 seconds)
+      const safeInterval = Math.max(
+        config.autoRefreshInterval, 
+        FETCH_CONSTANTS.MIN_AUTO_REFRESH_INTERVAL
+      );
       
       // Only refresh if the document is visible to avoid background fetches
       const refreshIfVisible = () => {
@@ -297,6 +326,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
       
       refreshIntervalRef.current = setInterval(refreshIfVisible, safeInterval);
     }
+  }, [isSignedIn, fetchUser]);
+
+  // Initial fetch when auth state is loaded
+  useEffect(() => {
+    if (isLoaded && isSignedIn && !initialFetchCompleteRef.current) {
+      initialFetchCompleteRef.current = true;
+      fetchUser({ force: true }); // Force fetch on initial load
+    } else if (isLoaded && !isSignedIn) {
+      setUser(null);
+      setIsLoading(false);
+    }
+  }, [isLoaded, isSignedIn, fetchUser]);
+
+  // Setup auto-refresh
+  useEffect(() => {
+    setupAutoRefresh();
     
     // Cleanup on unmount
     return () => {
@@ -304,15 +349,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [isSignedIn, fetchUser]);
+  }, [setupAutoRefresh]);
 
   // Provide context value
   const value = {
     user,
     isLoading,
     error,
-    updateUser,
-    refreshUser: fetchUser,
+    updateUser: (data: Partial<UserProfile>) => updateUser(data),
+    refreshUser: () => fetchUser({ force: true }),
     setDataSource: changeDataSource,
     currentDataSource: dataSource,
   };
@@ -320,6 +365,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
+// Hook to use the user context
 export function useUser() {
   const context = useContext(UserContext);
   if (context === undefined) {
