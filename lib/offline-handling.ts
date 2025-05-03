@@ -1,6 +1,19 @@
 'use client';
 
 /**
+ * Type definition for network or request errors
+ */
+export type OfflineError = Error | { 
+  message?: string; 
+  code?: string;
+  response?: { 
+    status?: number;
+    statusText?: string;
+    data?: unknown;
+  }
+};
+
+/**
  * Enhanced function to handle offline requests with retry logic and better error tracking
  */
 export async function withOfflineHandling<T>(
@@ -10,8 +23,8 @@ export async function withOfflineHandling<T>(
     retryDelay?: number;
     fallback?: T;
     onOffline?: () => void;
-    onRetry?: (attempt: number, error: any) => void;
-    onFallback?: (error: any) => void;
+    onRetry?: (attempt: number, error: OfflineError | unknown) => void;
+    onFallback?: (error: OfflineError | unknown) => void;
   } = {}
 ): Promise<T> {
   const {
@@ -24,30 +37,33 @@ export async function withOfflineHandling<T>(
   } = options;
   
   let attemptCount = 0;
-  let lastError: any = null;
+  let lastError: OfflineError | unknown = null;
   
   // Helper function to determine if error is network-related
-  const isNetworkError = (error: any): boolean => {
-    const errorMsg = (error?.message || '').toLowerCase();
+  const isNetworkError = (error: OfflineError | unknown): boolean => {
+    // Type guard for accessing properties safely
+    const err = error as OfflineError;
+    const errorMsg = (err?.message || '').toLowerCase();
     return (
       errorMsg.includes('network') || 
       errorMsg.includes('timeout') || 
       errorMsg.includes('abort') ||
       errorMsg.includes('failed to fetch') ||
       errorMsg === 'network error' ||
-      error?.code === 'ECONNREFUSED' ||
-      error?.code === 'ECONNABORTED' ||
-      error?.code === 'ETIMEDOUT'
+      err?.code === 'ECONNREFUSED' ||
+      err?.code === 'ECONNABORTED' ||
+      err?.code === 'ETIMEDOUT'
     );
   };
   
   // Helper to check if we should retry for this error
-  const shouldRetry = (error: any): boolean => {
+  const shouldRetry = (error: OfflineError | unknown): boolean => {
     // Network errors should be retried
     if (isNetworkError(error)) return true;
     
     // Retry server errors (5xx) but not client errors (4xx)
-    const status = error?.response?.status || 0;
+    const err = error as OfflineError;
+    const status = err?.response?.status || 0;
     return status >= 500 && status < 600;
   };
   
@@ -71,7 +87,7 @@ export async function withOfflineHandling<T>(
       
       // Try the request
       return await callback();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Store last error for potential re-throw
       lastError = error;
       attemptCount++;

@@ -22,8 +22,13 @@ export function LoadingSpinner({
   };
 
   return (
-    <div className={cn("flex flex-col items-center justify-center", className)}>
-      <Loader2 className={cn(sizeClasses[size], "animate-spin text-primary")} />
+    <div 
+      className={cn("flex flex-col items-center justify-center", className)}
+      role="status"
+      aria-live="polite"
+      data-testid="loading-spinner"
+    >
+      <Loader2 className={cn(sizeClasses[size], "animate-spin text-primary")} aria-hidden="true" />
       {text && (
         <span className={cn(
           "mt-2 text-center text-muted-foreground",
@@ -32,6 +37,7 @@ export function LoadingSpinner({
           {text}
         </span>
       )}
+      <span className="sr-only">{text || "Loading"}</span>
     </div>
   );
 }

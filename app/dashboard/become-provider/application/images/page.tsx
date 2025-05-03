@@ -22,6 +22,11 @@ export default async function ProviderImagesPage({
     redirect('/dashboard/become-provider/application');
   }
   
+  // Validate providerId format (assuming it should be numeric)
+  if (!/^\d+$/.test(providerId)) {
+    redirect('/dashboard/become-provider/application');
+  }
+  
   return (
     <div className="container py-8">
       <div className="flex items-center mb-6">

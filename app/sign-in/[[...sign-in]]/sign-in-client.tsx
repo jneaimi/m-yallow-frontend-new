@@ -3,6 +3,7 @@
 import { SignIn } from '@clerk/nextjs';
 import { useAuth } from '@clerk/nextjs';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import Link from 'next/link';
 
 export function SignInClient() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -25,11 +26,11 @@ export function SignInClient() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold mb-2">You're already signed in!</h2>
+        <h2 className="text-2xl font-bold mb-2">You&apos;re already signed in!</h2>
         <p className="text-gray-600 mb-4">You can now access the dashboard and other protected features.</p>
-        <a href="/dashboard" className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">
+        <Link href="/dashboard" className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">
           Go to Dashboard
-        </a>
+        </Link>
       </div>
     );
   }

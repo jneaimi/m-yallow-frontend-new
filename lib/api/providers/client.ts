@@ -1,7 +1,7 @@
 'use client';
 
 import { useApiClient } from '@/lib/api-client/client';
-import { ApiProvider, PROVIDER_API, transformProvider } from '../providers';
+import { PROVIDER_API } from '../providers';
 
 export interface CreateProviderData {
   name: string;

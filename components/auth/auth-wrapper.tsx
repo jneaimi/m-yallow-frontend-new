@@ -4,6 +4,7 @@ import { useUser } from '@/lib/context/user-context';
 import { useAuth } from '@clerk/nextjs';
 import { ReactNode } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import Link from 'next/link';
 
 interface AuthWrapperProps {
   children: ReactNode;
@@ -46,9 +47,12 @@ export function AuthWrapper({
           <p className="mb-4">
             You need to be signed in to access this page.
           </p>
-          <a href="/sign-in" className="px-4 py-2 bg-amber-200 text-amber-800 rounded hover:bg-amber-300 transition-colors">
+          <Link 
+            href="/sign-in" 
+            className="px-4 py-2 bg-amber-200 text-amber-800 rounded hover:bg-amber-300 transition-colors"
+          >
             Sign In
-          </a>
+          </Link>
         </div>
       </div>
     );

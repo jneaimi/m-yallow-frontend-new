@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import axios, { AxiosError } from 'axios';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -66,37 +67,37 @@ export function ProviderProfileForm() {
   async function onSubmit(data: ProviderProfileFormValues) {
     setIsSubmitting(true);
     try {
-      const response = await createProvider(data);
-      
-      // Store the provider ID for subsequent steps
-      sessionStorage.setItem('createdProviderId', response.id.toString());
-      
-      // Show success message with promise to handle navigation
+      // Use toast.promise with the actual API call promise
       toast.promise(
-        // Artificial delay to show the toast before navigation
-        new Promise(resolve => setTimeout(resolve, 1000)), 
+        createProvider(data).then(response => {
+          // Store the provider ID for subsequent steps
+          sessionStorage.setItem('createdProviderId', response.id.toString());
+          // Navigate to the next step
+          router.push(`/dashboard/become-provider/application/images?providerId=${response.id}`);
+          return response;
+        }),
         {
           loading: 'Creating your provider profile...',
-          success: () => {
-            // Navigate to the next step after the toast is shown
-            setTimeout(() => {
-              router.push(`/dashboard/become-provider/application/images?providerId=${response.id}`);
-            }, 500);
-            return 'Provider profile created successfully!';
-          },
+          success: 'Provider profile created successfully!',
           error: 'Failed to create provider profile',
         }
       );
-    } catch (error: any) {
-      console.error('Failed to create provider profile:', error);
+    } catch (err: unknown) {
+      console.error('Failed to create provider profile:', err);
       
       // Provide more specific error messages based on the error
-      if (error.response?.status === 401) {
-        toast.error('Authentication error. Please sign in again.');
-      } else if (error.response?.status === 400) {
-        toast.error('Invalid provider information. Please check your inputs.');
-      } else if (error.response?.data?.message) {
-        toast.error(`Error: ${error.response.data.message}`);
+      if (axios.isAxiosError(err)) {
+        const error = err as AxiosError;
+        
+        if (error.response?.status === 401) {
+          toast.error('Authentication error. Please sign in again.');
+        } else if (error.response?.status === 400) {
+          toast.error('Invalid provider information. Please check your inputs.');
+        } else if (error.response?.data && typeof error.response.data === 'object' && 'message' in error.response.data) {
+          toast.error(`Error: ${(error.response.data as { message: string }).message}`);
+        } else {
+          toast.error(`Server error: ${error.message || 'Unknown error'}`);
+        }
       } else {
         toast.error('Failed to create provider profile. Please try again.');
       }
