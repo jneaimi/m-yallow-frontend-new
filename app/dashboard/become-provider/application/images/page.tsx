@@ -3,12 +3,13 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getProviderHeroImageUrl, getFallbackImageUrl } from '@/lib/image-utils';
+import { ProviderHeroImageClient } from './provider-hero-image-client';
 
 export default async function ProviderImagesPage({
   searchParams,
 }: {
-  searchParams: { providerId?: string }
+  searchParams: Promise<{ providerId?: string }>
 }) {
   const user = await currentUser();
   
@@ -16,7 +17,8 @@ export default async function ProviderImagesPage({
     redirect('/sign-in');
   }
   
-  const providerId = searchParams.providerId;
+  const params = await searchParams;
+  const providerId = params.providerId;
   
   if (!providerId) {
     redirect('/dashboard/become-provider/application');
@@ -26,6 +28,11 @@ export default async function ProviderImagesPage({
   if (!/^\d+$/.test(providerId)) {
     redirect('/dashboard/become-provider/application');
   }
+  
+  // Construct the existing hero image URL if any, using fallback as null to avoid 404 errors
+  // This will let the component handle displaying the upload UI instead of a broken image
+  const fallbackUrl = null; // Don't use fallback here to avoid unnecessary 404 errors
+  const existingImageUrl = getProviderHeroImageUrl(providerId);
   
   return (
     <div className="container py-8">
@@ -42,27 +49,27 @@ export default async function ProviderImagesPage({
       
       <div className="mb-8">
         <p className="text-muted-foreground">
-          This is a placeholder for the image upload page. Provider ID: {providerId}
+          Upload a high-quality hero image to make your provider profile stand out.
+          This image will be displayed at the top of your profile and in search results.
         </p>
       </div>
       
       <div className="grid gap-8 max-w-3xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Images</CardTitle>
-            <CardDescription>
-              Add photos to showcase your business or services
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Image upload functionality will be implemented in a future task.</p>
-            <div className="mt-4">
-              <Button asChild>
-                <Link href="/dashboard">Return to Dashboard</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Hero Image Upload Component */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-4">Hero Image</h2>
+          <ProviderHeroImageClient 
+            providerId={providerId} 
+            existingImageUrl={existingImageUrl}
+          />
+        </div>
+        
+        {/* Continue Button */}
+        <div className="flex justify-end mt-6">
+          <Button asChild>
+            <Link href="/dashboard">Return to Dashboard</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
