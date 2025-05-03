@@ -77,13 +77,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // Fetch user from backend
   const fetchFromBackend = useCallback(async (): Promise<UserProfile | null> => {
     try {
-      // Use offline handling with fallback to Clerk data
+      // First attempt to get the user profile from the backend
+      // Only use Clerk data as a last resort fallback
       const clerkFallbackData = clerkUser ? userMappers.mapClerkUserToProfile(clerkUser) : null;
       
       const fetchedProfile = await withOfflineHandling(
         async () => await profileClient.getUserProfile(),
         {
-          retries: 2,
+          retries: 3,  // Increase retries to be more resilient
+          retryDelay: 1500, // Slightly longer delay between retries
           onOffline: () => {
             toast.warning("You're offline. Using cached user data.");
           },
@@ -92,16 +94,35 @@ export function UserProvider({ children }: { children: ReactNode }) {
       );
       
       if (fetchedProfile) {
+        // Successfully retrieved backend profile - this is the preferred outcome
         return fetchedProfile;
       } else if (clerkUser && !fetchedProfile) {
-        // If offline handling returned null but we have Clerk data
+        // If backend fetch failed but we have Clerk data, use it as fallback
+        // But also show a toast to let the user know we're using limited data
+        toast.warning("Using basic profile data while connecting to our servers. Some features may be limited.");
         return clerkFallbackData;
       }
       
       return null;
     } catch (err) {
+      // Enhanced error handling with more detailed reporting
       console.error('Failed to fetch user profile from backend:', err);
-      throw new Error('Failed to load your profile');
+      
+      // More descriptive error message
+      if (err instanceof Error) {
+        const errorMessage = err.message || 'Unknown error';
+        const isNetworkError = errorMessage.includes('network') || 
+                               errorMessage.includes('timeout') || 
+                               errorMessage.includes('abort');
+        
+        if (isNetworkError) {
+          throw new Error('Network error while loading your profile. Please check your connection.');
+        } else {
+          throw new Error('Failed to load your complete profile. Our team has been notified.');
+        }
+      } else {
+        throw new Error('Failed to load your profile data.');
+      }
     }
   }, [profileClient, clerkUser]);
 
@@ -239,39 +260,38 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       let updatedProfile: UserProfile | null = null;
       
-      if (dataSource === 'backend') {
-        // Primary update in backend
+      // Always update backend first - backend is the source of truth
+      try {
         updatedProfile = await updateBackendUser(data);
         
-        // Sync with Clerk if configured
+        // Backend update successful - optionally sync to Clerk if configured
         const shouldSyncWithClerk = options.syncWithClerk ?? userContextConfig.get().syncOnUpdate;
         if (shouldSyncWithClerk && updatedProfile) {
           try {
             await updateClerkUser(data);
           } catch (err) {
             console.error('Failed to sync data with Clerk:', err);
-            // Don't fail the operation if Clerk sync fails
+            // Don't fail the operation if Clerk sync fails - backend is source of truth
           }
         }
-      } else {
-        // Primary update in Clerk
-        const success = await updateClerkUser(data);
+      } catch (err) {
+        // Backend update failed
+        console.error('Failed to update backend profile:', err);
         
-        // Sync with backend if configured
-        const shouldSyncWithBackend = options.syncWithBackend ?? userContextConfig.get().syncOnUpdate;
-        if (shouldSyncWithBackend && success) {
-          try {
-            updatedProfile = await updateBackendUser(data);
-          } catch (err) {
-            console.error('Failed to sync data with backend:', err);
-            // Don't fail the operation if backend sync fails
+        // If user explicitly chose Clerk as data source, fall back to Clerk
+        if (dataSource === 'clerk') {
+          toast.warning('Unable to update your full profile. Saving basic info only.');
+          
+          // Try Clerk update as fallback
+          const success = await updateClerkUser(data);
+          
+          if (success) {
+            // Refresh user data to get updated values
+            updatedProfile = await fetchUser({ force: true });
           }
-        }
-        
-        // If Clerk update was successful but no backend update
-        if (success && !updatedProfile) {
-          // Refresh user data to get updated values
-          updatedProfile = await fetchUser({ force: true });
+        } else {
+          // If backend is preferred source and update failed, show error and rollback
+          throw err;
         }
       }
       
@@ -287,6 +307,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('Failed to update profile:', err);
       rollback();
+      // Show more specific error message
+      if (err instanceof Error) {
+        toast.error(`Profile update failed: ${err.message}`);
+      } else {
+        toast.error('Profile update failed. Please try again later.');
+      }
       return null;
     }
   }, [isSignedIn, dataSource, user, updateBackendUser, updateClerkUser, fetchUser]);

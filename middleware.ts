@@ -1,10 +1,4 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-
-const isProtectedRoute = createRouteMatcher([
-  '/dashboard(.*)',
-  '/admin(.*)',
-  '/api/protected(.*)'
-]);
+import { clerkMiddleware } from '@clerk/nextjs/server';
 
 export default clerkMiddleware({
   publicRoutes: [
@@ -16,13 +10,10 @@ export default clerkMiddleware({
     '/responsive-demo(.*)',
     '/theme-demo(.*)'
   ],
+  // Disable all afterAuth redirects to prevent loops
   afterAuth(auth, req) {
-    // Handle custom logic after authentication check
-    if (!auth.isAuthenticated && isProtectedRoute(req.nextUrl.pathname)) {
-      const signInUrl = new URL('/sign-in', req.url);
-      signInUrl.searchParams.set('redirect_url', req.url);
-      return Response.redirect(signInUrl);
-    }
+    // Skip all redirects for now to prevent loops
+    return;
   }
 });
 

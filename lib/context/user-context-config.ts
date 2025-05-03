@@ -11,9 +11,9 @@ interface UserContextConfig {
 
 // Default configuration
 const defaultConfig: UserContextConfig = {
-  dataSource: 'backend', // Use our backend as the primary source
-  syncOnUpdate: true,    // Keep Clerk and our backend in sync when data changes
-  autoRefreshInterval: null, // No auto refresh by default - this prevents excessive API calls
+  dataSource: 'backend', // Use our backend as the authoritative source of truth
+  syncOnUpdate: false,   // Don't sync profile updates to Clerk - our backend is the source of truth
+  autoRefreshInterval: 60000, // Refresh profile data every minute to ensure we have latest backend data
 };
 
 // Singleton pattern to maintain a single config instance

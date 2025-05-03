@@ -1,28 +1,32 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/lib/context/user-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Settings, Bookmark, Star } from 'lucide-react';
 import Link from 'next/link';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export function ProfileSummary() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading } = useUser();
   
-  if (!isLoaded || !user) {
+  if (isLoading || !user) {
     return (
       <Card>
         <CardContent className="pt-6">
           <div className="flex justify-center items-center h-20">
-            <span className="text-muted-foreground">Loading profile...</span>
+            <LoadingSpinner size="sm" text="Loading profile..." />
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  const initials = `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
+  // Get initials from backend user data
+  const initials = `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`;
+  // Get full name from backend user data
+  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
   
   return (
     <Card>
@@ -33,15 +37,15 @@ export function ProfileSummary() {
       <CardContent>
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
           <Avatar className="h-20 w-20">
-            <AvatarImage src={user.imageUrl} alt={user.fullName || 'User'} />
+            <AvatarImage src={user.avatar_url || ''} alt={fullName} />
             <AvatarFallback className="text-xl">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 text-center sm:text-left">
             <h3 className="text-xl font-semibold">
-              {user.fullName || 'User'}
+              {user.displayName || fullName}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {user.primaryEmailAddress?.emailAddress}
+              {user.email}
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
