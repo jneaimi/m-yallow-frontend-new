@@ -34,7 +34,7 @@ export interface UserProfile {
  * @param operation The operation being performed (for logging)
  * @param data Optional data that was being sent (for debugging in dev)
  */
-function handleProfileError(error: unknown, operation: string, data?: any): never {
+function handleProfileError(error: unknown, operation: string, data?: Partial<UserProfile> | Record<string, unknown>): never {
   // Safe logging based on environment
   if (process.env.NODE_ENV === 'development') {
     console.error(`[debug] Error ${operation}:`, {
