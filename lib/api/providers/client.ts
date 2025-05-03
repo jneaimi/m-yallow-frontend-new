@@ -119,14 +119,17 @@ export function useProviderClient() {
      * @returns The public URL of the uploaded image
      */
     uploadHeroImage: async (providerId: string | number, file: File): Promise<string> => {
+      // Destructure methods from the returned object to avoid 'this' context issues
+      const { getHeroImageUploadUrl, uploadFileToUrl, confirmHeroImageUpload } = this;
+      
       // Step 1: Get the upload URL
-      const { uploadUrl, publicUrl } = await this.getHeroImageUploadUrl(providerId);
+      const { uploadUrl, publicUrl } = await getHeroImageUploadUrl(providerId);
       
       // Step 2: Upload the file directly to storage
-      await this.uploadFileToUrl(uploadUrl, file);
+      await uploadFileToUrl(uploadUrl, file);
       
       // Step 3: Confirm the upload with the backend
-      const confirmation = await this.confirmHeroImageUpload(providerId, publicUrl);
+      const confirmation = await confirmHeroImageUpload(providerId, publicUrl);
       
       return confirmation.heroImageUrl || publicUrl;
     }

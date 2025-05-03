@@ -89,8 +89,20 @@ export function ProviderHeroImage({
       });
       
       if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        throw new Error(errorData.error || 'Failed to upload image');
+        let errorMessage = 'Failed to upload image';
+        try {
+          const errorData = await uploadResponse.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If we can't parse JSON, try to get text
+          try {
+            const errorText = await uploadResponse.text();
+            errorMessage = errorText || errorMessage;
+          } catch (textError) {
+            console.error('Could not read error response:', textError);
+          }
+        }
+        throw new Error(errorMessage);
       }
       
       // Get the response which includes the publicUrl

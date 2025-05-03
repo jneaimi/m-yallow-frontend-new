@@ -60,9 +60,10 @@ export async function POST(
     // Create buffer outside of the request for reuse
     const fileBuffer = Buffer.from(file.buffer);
     
-    // Step 1: Get the upload URL from the backend
+    // Step 1: Get the upload URL from the backend with content type
     const getUrlResponse = await apiClient.post(
-      `/providers/${providerId}/hero-image/url`
+      `/providers/${providerId}/hero-image/url`,
+      { contentType: file.type } // Pass the content type to the backend
     );
     
     const { uploadUrl, publicUrl } = getUrlResponse.data;
@@ -74,11 +75,17 @@ export async function POST(
       // Step 2: Upload to R2 using node-fetch with minimal headers
       // This mimics what Postman does - a simple PUT with just Content-Type
       console.log('Uploading with node-fetch, file size:', fileBuffer.length);
+      console.log('File content type:', file.type);
+      console.log('File name:', file.name);
+      
+      // Extract the content type from the URL to ensure they match
+      const urlContentType = new URL(uploadUrl).searchParams.get('Content-Type') || file.type;
+      console.log('URL content type parameter:', urlContentType);
       
       const response = await fetch(uploadUrl, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'image/jpeg', // Use a fixed content type to match the pre-signed URL
+          'Content-Type': urlContentType, // Use content type from URL or fallback to file type
         },
         body: fileBuffer,
       });
