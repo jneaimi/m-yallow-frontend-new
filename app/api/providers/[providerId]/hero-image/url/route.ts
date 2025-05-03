@@ -34,9 +34,20 @@ export async function POST(
     // Create API client with token
     const apiClient = await createApiClient(token);
     
+    // Parse the request body to get the content type if provided
+    let contentType;
+    try {
+      const body = await req.json();
+      contentType = body.contentType;
+    } catch (e) {
+      // No request body or invalid JSON, use default content type
+      console.log('No content type provided in request body');
+    }
+    
     // Call the backend API to get the upload URL
     const response = await apiClient.post(
-      `/providers/${providerId}/hero-image/url`
+      `/providers/${providerId}/hero-image/url`,
+      contentType ? { contentType } : undefined
     );
     
     // Return the response from the backend
