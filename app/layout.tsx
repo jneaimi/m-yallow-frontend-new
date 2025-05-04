@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { SkipLink } from "@/components/skip-link";
 import { LiveRegion } from "@/components/a11y/live-region";
 import { UserProvider } from "@/lib/context/user-context";
+import { ProviderProvider } from "@/lib/context/provider-context";
 import { NetworkProvider } from "@/lib/network-context";
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { ClientDebugPanel } from "@/components/dev/client-debug-panel";
@@ -67,7 +68,8 @@ export default function RootLayout({
         <ClerkProvider>
           <NetworkProvider>
             <UserProvider>
-              <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <ProviderProvider>
+                <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                 {/* Screen reader announcements live region */}
                 <LiveRegion id="a11y-announcer" politeness="polite" />
 
@@ -97,6 +99,7 @@ export default function RootLayout({
                 {/* Footer with landmark role */}
                 <Footer />
               </ThemeProvider>
+              </ProviderProvider>
             </UserProvider>
           </NetworkProvider>
         </ClerkProvider>

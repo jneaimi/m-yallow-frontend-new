@@ -38,6 +38,24 @@ export function useProviderClient() {
 
   return {
     /**
+     * Get the current user's provider information
+     * @returns The provider information for the current user, or null if not a provider
+     */
+    getMyProvider: async (): Promise<ApiProvider | null> => {
+      try {
+        const apiClient = await getApiClient();
+        const response = await apiClient.get('/providers/me');
+        return response.data;
+      } catch (err: any) {
+        // If status is 404, the user is not a provider yet
+        if (err.response && err.response.status === 404) {
+          return null;
+        }
+        // Re-throw other errors
+        throw err;
+      }
+    },
+    /**
      * Create a new provider profile
      * @param data Provider profile data
      * @returns The created provider

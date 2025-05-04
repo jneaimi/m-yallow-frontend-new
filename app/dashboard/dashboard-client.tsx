@@ -4,7 +4,7 @@ import { useUser } from '@/lib/context/user-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileSummary } from '@/components/user/profile-summary';
-import { BecomeProviderBanner } from '@/components/user/become-provider-banner';
+import { ProviderStatusBanner } from '@/components/user/provider-status-banner';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
 export function DashboardClient() {
@@ -23,7 +23,7 @@ export function DashboardClient() {
           {/* Left sidebar */}
           <div className="lg:col-span-1 space-y-6">
             <ProfileSummary />
-            <BecomeProviderBanner />
+            <ProviderStatusBanner />
           </div>
 
           {/* Main content area */}
