@@ -8,6 +8,15 @@ export interface CreateProviderData {
   contact: string;
   location: string;
   about: string;
+  
+  // Location specific fields
+  latitude: number;
+  longitude: number;
+  street?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
 }
 
 export interface CreateProviderResponse {
@@ -137,18 +146,51 @@ export function useProviderClient() {
      * @returns The public URL of the uploaded image
      */
     uploadHeroImage: async (providerId: string | number, file: File): Promise<string> => {
-      // Destructure methods from the returned object to avoid 'this' context issues
-      const { getHeroImageUploadUrl, uploadFileToUrl, confirmHeroImageUpload } = this;
+      const apiClient = await getApiClient();
       
       // Step 1: Get the upload URL
-      const { uploadUrl, publicUrl } = await getHeroImageUploadUrl(providerId);
+      const urlResponse = await fetch(`/api/providers/${providerId}/hero-image/url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!urlResponse.ok) {
+        const errorData = await urlResponse.json();
+        throw new Error(errorData.error || 'Failed to get upload URL');
+      }
+      
+      const { uploadUrl, publicUrl } = await urlResponse.json();
       
       // Step 2: Upload the file directly to storage
-      await uploadFileToUrl(uploadUrl, file);
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload file to storage');
+      }
       
       // Step 3: Confirm the upload with the backend
-      const confirmation = await confirmHeroImageUpload(providerId, publicUrl);
+      const confirmResponse = await fetch(`/api/providers/${providerId}/hero-image/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ publicUrl }),
+      });
       
+      if (!confirmResponse.ok) {
+        const errorData = await confirmResponse.json();
+        throw new Error(errorData.error || 'Failed to confirm upload');
+      }
+      
+      const confirmation = await confirmResponse.json();
       return confirmation.heroImageUrl || publicUrl;
     }
   };
