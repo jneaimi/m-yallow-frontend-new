@@ -67,7 +67,9 @@ export default async function ProviderImagesPage({
         {/* Continue Button */}
         <div className="flex justify-end mt-6">
           <Button asChild>
-            <Link href="/dashboard">Return to Dashboard</Link>
+            <Link href={`/dashboard/become-provider/application/categories?providerId=${providerId}`}>
+              Continue to Categories
+            </Link>
           </Button>
         </div>
       </div>

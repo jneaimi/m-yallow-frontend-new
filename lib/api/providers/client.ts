@@ -64,6 +64,27 @@ export function useProviderClient() {
         throw err;
       }
     },
+    
+    /**
+     * Update categories for the current provider
+     * @param categoryIds Array of category IDs to assign to the provider
+     * @returns Success status
+     */
+    updateProviderCategories: async (categoryIds: number[]): Promise<{ success: boolean }> => {
+      try {
+        const apiClient = await getApiClient();
+        // The API path should be as per documentation
+        await apiClient.post('/api/providers/me/categories', categoryIds, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Error updating provider categories:', error);
+        throw error;
+      }
+    },
     /**
      * Create a new provider profile
      * @param data Provider profile data
