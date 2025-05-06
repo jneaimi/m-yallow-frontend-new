@@ -23,20 +23,41 @@ export function ProviderCategoriesForm({ providerId }: ProviderCategoriesFormPro
 
   // Fetch categories on mount
   useEffect(() => {
+    let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
+
     const getCategories = async () => {
       try {
         setIsLoading(true);
         const response = await fetchPublicCategories();
-        setCategories(response.categories);
+        if (isMounted) {
+          setCategories(response.categories);
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
-        toast.error('Failed to load categories. Please try again.');
+        if (isMounted) {
+          if (retryCount < maxRetries) {
+            retryCount++;
+            const retryDelay = 1000 * retryCount; // Exponential backoff
+            toast.error(`Failed to load categories. Retrying in ${retryDelay/1000}s...`);
+            setTimeout(getCategories, retryDelay);
+          } else {
+            toast.error('Failed to load categories after multiple attempts. Please refresh the page.');
+          }
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     getCategories();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Toggle category selection
@@ -66,13 +87,20 @@ export function ProviderCategoriesForm({ providerId }: ProviderCategoriesFormPro
       
       // Navigate to dashboard or success page
       router.push('/dashboard?profileSetupComplete=true');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating categories:', error);
       // More detailed error logging
-      if (error.response) {
-        console.error('Error response data:', error.response.data);
-        console.error('Error response status:', error.response.status);
-        toast.error(`Failed to update categories: ${error.response.data?.message || error.message}`);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { 
+          response: { 
+            data?: { message?: string }, 
+            status: number 
+          }, 
+          message?: string 
+        };
+        console.error('Error response data:', apiError.response.data);
+        console.error('Error response status:', apiError.response.status);
+        toast.error(`Failed to update categories: ${apiError.response.data?.message || apiError.message}`);
       } else {
         toast.error('Failed to update categories. Please try again.');
       }
