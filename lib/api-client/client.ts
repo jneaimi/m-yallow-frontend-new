@@ -1,7 +1,7 @@
 'use client';
 
 import { createClientApiClient } from '@/lib/api-client';
-import { useAuthToken } from '@/lib/auth/client';
+import { useAuthToken, useAuthUserId } from '@/lib/auth/client';
 import { useAuth } from '@clerk/nextjs';
 import { useCallback } from 'react';
 
@@ -11,6 +11,7 @@ import { useCallback } from 'react';
  */
 export function useApiClient() {
   const getToken = useAuthToken(); // This returns a stable function reference
+  const getUserId = useAuthUserId(); // Get the user ID function
   const { isSignedIn } = useAuth(); // Add useAuth to check authentication state
 
   // Wrap the async function in useCallback to stabilize its reference
@@ -25,13 +26,14 @@ export function useApiClient() {
       
       // Get the token and validate it's not empty
       const token = await getToken();
+      const userId = getUserId();
       
       if (!token) {
         console.warn('No auth token available despite user being signed in');
         throw new Error('Authentication token not available. Please sign in again.');
       }
       
-      return createClientApiClient(token);
+      return createClientApiClient(token, userId || undefined);
     } catch (error) {
       console.error('Error creating API client:', error);
       // For token errors, throw a more user-friendly error
@@ -40,7 +42,7 @@ export function useApiClient() {
       }
       throw error;
     }
-  }, [getToken, isSignedIn]); // Dependencies: the stable getToken function and auth state
+  }, [getToken, getUserId, isSignedIn]); // Dependencies: the stable getToken function and auth state
 
   return getApiClient;
 }

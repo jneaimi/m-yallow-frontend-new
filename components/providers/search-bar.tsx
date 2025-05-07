@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { trackSearchActivity } from "@/services/api";
 
 interface SearchBarProps {
   className?: string;
@@ -19,12 +21,60 @@ export function SearchBar({
 }: SearchBarProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState(initialValue);
+  const { isSignedIn, getToken } = useAuth();
+  const { user } = useUser();
+  const [authDetails, setAuthDetails] = useState<{token: string | null, userId: string | null}>({
+    token: null, 
+    userId: null
+  });
+  
+  // Get authentication details when component mounts or auth state changes
+  useEffect(() => {
+    const fetchAuthDetails = async () => {
+      if (isSignedIn && user) {
+        try {
+          const token = await getToken();
+          setAuthDetails({
+            token,
+            userId: user.id
+          });
+        } catch (error) {
+          console.error("Error getting auth token:", error);
+        }
+      } else {
+        setAuthDetails({token: null, userId: null});
+      }
+    };
+    
+    fetchAuthDetails();
+  }, [isSignedIn, user, getToken]);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // Use the q parameter for better compatibility with the search component
-      router.push(`/providers/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      const query = encodeURIComponent(searchTerm.trim());
+      
+      // Track search activity for authenticated users
+      if (authDetails.token && authDetails.userId) {
+        try {
+          console.log("Tracking search activity for user:", authDetails.userId);
+          
+          // Fire and forget - no need to await
+          trackSearchActivity({
+            query: searchTerm.trim(),
+            token: authDetails.token,
+            userId: authDetails.userId
+          });
+        } catch (error) {
+          // Log error but continue with navigation
+          console.error("Error tracking search activity:", error);
+        }
+      } else {
+        console.log("Searching as anonymous user");
+      }
+      
+      // Navigate to search results page
+      router.push(`/providers/search?q=${query}`);
     }
   };
 

@@ -31,6 +31,7 @@ async function searchProviders(query: string, categoryId?: string, limit: number
   let apiEndpoint;
   if (query) {
     // If there's a search query, use the search endpoint
+    // First try the dedicated search endpoint
     apiEndpoint = `${PROVIDER_API.SEARCH}?${new URLSearchParams(params)}`;
   } else if (categoryId) {
     // If there's only a category filter, use the public providers endpoint
@@ -42,8 +43,29 @@ async function searchProviders(query: string, categoryId?: string, limit: number
   
   console.log(`Fetching providers from: ${apiEndpoint}${categoryId ? ` (Category ID: ${categoryId})` : ''}`);
   
+  // We won't attempt to get auth in the server component anymore
   try {
-    const res = await fetch(apiEndpoint, { next: { revalidate: 60 } });
+    console.log('Sending search request with server-side rendering');
+    let res = await fetch(apiEndpoint, { 
+      next: { revalidate: 60 },
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    });
+    
+    // If using the dedicated search endpoint fails, fallback to the main providers endpoint
+    // which also supports query parameter
+    if (!res.ok && query && apiEndpoint.includes('/public/providers/search')) {
+      console.log(`Search endpoint failed (${res.status}), falling back to main providers endpoint`);
+      const fallbackEndpoint = `${PROVIDER_API.PUBLIC}?${new URLSearchParams(params)}`;
+      console.log(`Trying fallback endpoint: ${fallbackEndpoint}`);
+      res = await fetch(fallbackEndpoint, { 
+        next: { revalidate: 60 },
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+    }
     
     if (!res.ok) {
       console.error(`API response not OK: ${res.status} ${res.statusText}`);

@@ -2,23 +2,25 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { apiMetrics } from './api-metrics';
 
 // Server-side API client creator
-export async function createApiClient(token?: string) {
+export async function createApiClient(token?: string, userId?: string) {
   return axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
     headers: {
       Authorization: token ? `Bearer ${token}` : '',
       'Content-Type': 'application/json',
+      'X-User-ID': userId || '',  // Add user ID header for backend identification
     },
   });
 }
 
 // Client-side API client creator with metrics tracking
-export function createClientApiClient(token?: string): AxiosInstance {
+export function createClientApiClient(token?: string, userId?: string): AxiosInstance {
   const instance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
     headers: {
       Authorization: token ? `Bearer ${token}` : '',
       'Content-Type': 'application/json',
+      'X-User-ID': userId || '',  // Add user ID header for backend identification
     },
   });
   
