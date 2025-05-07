@@ -12,14 +12,12 @@ interface SearchBarProps {
   className?: string;
   placeholder?: string;
   initialValue?: string;
-  prefetch?: boolean; // Add option to control prefetching behavior
 }
 
 export function SearchBar({ 
   className = "", 
   placeholder = "Search for providers...",
-  initialValue = "",
-  prefetch = false // Default to no prefetching to avoid double fetches
+  initialValue = ""
 }: SearchBarProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState(initialValue);
