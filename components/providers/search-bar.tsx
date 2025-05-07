@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { trackSearchActivity } from "@/services/api";
 
 interface SearchBarProps {
   className?: string;
@@ -58,9 +59,6 @@ export function SearchBar({
       // Track search activity for authenticated users
       if (authDetails.token && authDetails.userId) {
         try {
-          // Import the API service dynamically
-          const { trackSearchActivity } = await import('@/services/api');
-          
           console.log("Tracking search activity for user:", authDetails.userId);
           
           // Fire and forget - no need to await
