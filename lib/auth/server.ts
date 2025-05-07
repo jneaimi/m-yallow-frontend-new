@@ -30,5 +30,5 @@ export async function getAuthToken(): Promise<string | null> {
  */
 export function getAuthUserId(): string | null {
   const { userId } = auth();
-  return userId;
+  return userId ?? null;
 }

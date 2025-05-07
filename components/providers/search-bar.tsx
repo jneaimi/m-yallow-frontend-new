@@ -11,12 +11,14 @@ interface SearchBarProps {
   className?: string;
   placeholder?: string;
   initialValue?: string;
+  prefetch?: boolean; // Add option to control prefetching behavior
 }
 
 export function SearchBar({ 
   className = "", 
   placeholder = "Search for providers...",
-  initialValue = ""
+  initialValue = "",
+  prefetch = false // Default to no prefetching to avoid double fetches
 }: SearchBarProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState(initialValue);
@@ -37,7 +39,6 @@ export function SearchBar({
             token,
             userId: user.id
           });
-          console.log("Auth details set for search:", {userId: user.id, hasToken: !!token});
         } catch (error) {
           console.error("Error getting auth token:", error);
         }
@@ -54,29 +55,26 @@ export function SearchBar({
     if (searchTerm.trim()) {
       const query = encodeURIComponent(searchTerm.trim());
       
-      // Perform a direct API call with authentication
+      // Always track search activity for authenticated users
+      // This is necessary for the backend to log the search activity
       if (authDetails.token && authDetails.userId) {
-        console.log("Searching with authenticated user:", authDetails.userId);
-        
         try {
-          // Perform search via API with authentication
-          const apiEndpoint = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/public/providers/search?query=${query}&limit=20`;
+          // Import the API service dynamically
+          const { trackSearchActivity } = await import('@/services/api');
           
-          const response = await fetch(apiEndpoint, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authDetails.token}`,
-              'X-User-ID': authDetails.userId
-            }
+          console.log("Tracking search activity for user:", authDetails.userId);
+          
+          // Track search with a regular GET request that will be aborted after backend processing
+          trackSearchActivity({
+            query: searchTerm.trim(),
+            token: authDetails.token,
+            userId: authDetails.userId
           });
           
-          if (response.ok) {
-            console.log("Authenticated search successful");
-          } else {
-            console.warn("Authenticated search failed:", response.status);
-          }
+          // Don't await the response as we don't need it and it will be aborted anyway
         } catch (error) {
-          console.error("Error performing authenticated search:", error);
+          // Log error but continue with navigation
+          console.error("Error tracking search activity:", error);
         }
       } else {
         console.log("Searching as anonymous user");
