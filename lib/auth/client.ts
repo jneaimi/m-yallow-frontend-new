@@ -1,7 +1,7 @@
 'use client';
 
-// Removed duplicate import and commented out redundant JSDoc
 import { useAuth } from '@clerk/nextjs'; 
+import { useUser } from '@clerk/nextjs';
 import { useCallback } from 'react';
 
 /**
@@ -9,17 +9,32 @@ import { useCallback } from 'react';
  * @returns A stable function that returns the current auth token
  */
 export function useAuthToken() {
-  const { getToken } = useAuth(); // Use original destructuring
+  const { getToken } = useAuth();
 
   // Wrap the async function in useCallback to stabilize its reference
-  const memoizedGetToken = useCallback(async () => { // Rename the memoized function
+  const memoizedGetToken = useCallback(async () => {
     try {
-      return await getToken(); // Use original getToken from useAuth
+      return await getToken();
     } catch (error) {
       console.error('Failed to retrieve auth token on client:', error);
       return null;
     }
-  }, [getToken]); // Dependency is the original getToken
+  }, [getToken]);
 
-  return memoizedGetToken; // Return the memoized function
+  return memoizedGetToken;
+}
+
+/**
+ * Client-side hook for getting the current user ID
+ * @returns A stable function that returns the current user ID
+ */
+export function useAuthUserId() {
+  const { user } = useUser();
+  
+  const getUserId = useCallback(() => {
+    if (!user) return null;
+    return user.id;
+  }, [user]);
+  
+  return getUserId;
 }

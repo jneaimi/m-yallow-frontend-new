@@ -6,10 +6,10 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost
 // Provider API endpoints
 export const PROVIDER_API = {
   LIST: `${API_BASE_URL}/providers`,
-  SEARCH: `${API_BASE_URL}/providers/search`,
-  RECENT: `${API_BASE_URL}/public/providers/recent`, // Corrected path
+  SEARCH: `${API_BASE_URL}/public/providers/search`, // Updated to use public search endpoint
+  RECENT: `${API_BASE_URL}/public/providers/recent`, 
   PUBLIC: `${API_BASE_URL}/public/providers`,
-  DETAIL: (id: string | number) => `${API_BASE_URL}/public/providers/${id}`, // Use public endpoint
+  DETAIL: (id: string | number) => `${API_BASE_URL}/public/providers/${id}`, 
   CONTACT: (id: string | number) => `${API_BASE_URL}/providers/${id}/contact`
 };
 

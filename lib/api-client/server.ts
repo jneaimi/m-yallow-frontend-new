@@ -1,4 +1,4 @@
-import { getAuthToken } from '@/lib/auth/server';
+import { getAuthToken, getAuthUserId } from '@/lib/auth/server';
 import { createApiClient } from '@/lib/api-client';
 import 'server-only';
 
@@ -7,5 +7,6 @@ import 'server-only';
  */
 export async function createServerApiClient() {
   const token = await getAuthToken();
-  return createApiClient(token || undefined);
+  const userId = getAuthUserId();
+  return createApiClient(token || undefined, userId || undefined);
 }

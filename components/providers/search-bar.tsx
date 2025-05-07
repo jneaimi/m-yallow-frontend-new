@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuth, useUser } from "@clerk/nextjs";
 
 interface SearchBarProps {
   className?: string;
@@ -19,12 +20,70 @@ export function SearchBar({
 }: SearchBarProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState(initialValue);
+  const { isSignedIn, getToken } = useAuth();
+  const { user } = useUser();
+  const [authDetails, setAuthDetails] = useState<{token: string | null, userId: string | null}>({
+    token: null, 
+    userId: null
+  });
+  
+  // Get authentication details when component mounts or auth state changes
+  useEffect(() => {
+    const fetchAuthDetails = async () => {
+      if (isSignedIn && user) {
+        try {
+          const token = await getToken();
+          setAuthDetails({
+            token,
+            userId: user.id
+          });
+          console.log("Auth details set for search:", {userId: user.id, hasToken: !!token});
+        } catch (error) {
+          console.error("Error getting auth token:", error);
+        }
+      } else {
+        setAuthDetails({token: null, userId: null});
+      }
+    };
+    
+    fetchAuthDetails();
+  }, [isSignedIn, user, getToken]);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // Use the q parameter for better compatibility with the search component
-      router.push(`/providers/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      const query = encodeURIComponent(searchTerm.trim());
+      
+      // Perform a direct API call with authentication
+      if (authDetails.token && authDetails.userId) {
+        console.log("Searching with authenticated user:", authDetails.userId);
+        
+        try {
+          // Perform search via API with authentication
+          const apiEndpoint = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/public/providers/search?query=${query}&limit=20`;
+          
+          const response = await fetch(apiEndpoint, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authDetails.token}`,
+              'X-User-ID': authDetails.userId
+            }
+          });
+          
+          if (response.ok) {
+            console.log("Authenticated search successful");
+          } else {
+            console.warn("Authenticated search failed:", response.status);
+          }
+        } catch (error) {
+          console.error("Error performing authenticated search:", error);
+        }
+      } else {
+        console.log("Searching as anonymous user");
+      }
+      
+      // Navigate to search results page
+      router.push(`/providers/search?q=${query}`);
     }
   };
 

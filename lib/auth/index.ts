@@ -3,7 +3,7 @@
 // For client components, import from './client'
 
 // Server-side auth is re-exported for use in server components only
-export { getAuthToken } from './server';
+export { getAuthToken, getAuthUserId } from './server';
 
 // Client-side auth is not re-exported here to avoid accidental imports
 // in server components. Import directly from './client' in client components
