@@ -2,7 +2,10 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 if (!API_BASE_URL) {
   console.error('NEXT_PUBLIC_API_URL environment variable is not set');
-  // In production, we could throw an error or use a more specific fallback
+  // Throw an error in production to fail fast, or provide a fallback
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('NEXT_PUBLIC_API_URL environment variable is required in production');
+  }
 }
 
 export interface SearchOptions {
@@ -13,8 +16,8 @@ export interface SearchOptions {
 }
 
 /**
- * Track search activity without fetching full results
- * This function makes a GET request but ignores the response data
+ * Track search activity for authenticated users
+ * This function makes a lightweight fetch request to trigger activity logging
  */
 export async function trackSearchActivity({ 
   query, 
@@ -22,41 +25,31 @@ export async function trackSearchActivity({
   token = null, 
   userId = null 
 }: SearchOptions) {
-  const apiEndpoint = `${API_BASE_URL}/public/providers/search?query=${encodeURIComponent(query)}&limit=${limit}`;
+  // If no authentication info, don't bother calling the API
+  if (!token || !userId) {
+    return null;
+  }
+  
+  const apiEndpoint = `${API_BASE_URL}/public/providers/search?query=${encodeURIComponent(query)}&limit=1`;
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    'X-User-ID': userId
   };
   
-  // Add auth headers if available
-  if (token && userId) {
-    headers['Authorization'] = `Bearer ${token}`;
-    headers['X-User-ID'] = userId;
-  }
-  
   try {
-    // Make a standard GET request but abort it once we get headers
-    // This ensures the backend logs the search activity
-    const controller = new AbortController();
-    const signal = controller.signal;
-    
+    // Use fetch with no-store to prevent caching
+    // Keep limit=1 to minimize data transfer
     const response = fetch(apiEndpoint, { 
-      method: 'GET',
       headers,
-      signal
+      cache: 'no-store'
     });
     
-    // Wait just enough for the request to be processed by the backend
-    // Then abort to avoid downloading the entire response
-    setTimeout(() => controller.abort(), 100);
-    
+    // Don't await the response or process it - we just want to trigger the backend logging
     return response;
   } catch (error) {
-    // AbortError is expected, so don't log it
-    if (!(error instanceof DOMException && error.name === 'AbortError')) {
-      console.error("Error tracking search activity:", error);
-    }
-    // We don't throw here to prevent blocking navigation
+    console.error("Error tracking search activity:", error);
     return null;
   }
 }

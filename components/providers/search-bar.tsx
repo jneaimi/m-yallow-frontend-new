@@ -55,8 +55,7 @@ export function SearchBar({
     if (searchTerm.trim()) {
       const query = encodeURIComponent(searchTerm.trim());
       
-      // Always track search activity for authenticated users
-      // This is necessary for the backend to log the search activity
+      // Track search activity for authenticated users
       if (authDetails.token && authDetails.userId) {
         try {
           // Import the API service dynamically
@@ -64,14 +63,12 @@ export function SearchBar({
           
           console.log("Tracking search activity for user:", authDetails.userId);
           
-          // Track search with a regular GET request that will be aborted after backend processing
+          // Fire and forget - no need to await
           trackSearchActivity({
             query: searchTerm.trim(),
             token: authDetails.token,
             userId: authDetails.userId
           });
-          
-          // Don't await the response as we don't need it and it will be aborted anyway
         } catch (error) {
           // Log error but continue with navigation
           console.error("Error tracking search activity:", error);
