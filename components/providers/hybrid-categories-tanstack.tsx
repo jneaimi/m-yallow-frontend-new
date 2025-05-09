@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { CategoriesCarousel } from "./categories-carousel";
 import { CategoriesModalTanstack } from "./categories-modal-tanstack";
 
@@ -19,8 +19,8 @@ interface HybridCategoriesTanstackProps {
 export function HybridCategoriesTanstack({ categories, className }: HybridCategoriesTanstackProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Function to select featured categories
-  const getFeaturedCategories = () => {
+  // Memoize featured categories calculation to prevent unnecessary recalculations
+  const featuredCategories = useMemo(() => {
     // If we have fewer than 12 categories, just return them all
     if (categories.length <= 12) {
       return categories;
@@ -53,7 +53,7 @@ export function HybridCategoriesTanstack({ categories, className }: HybridCatego
     }
     
     return featured;
-  };
+  }, [categories]);
   
   const openModal = () => {
     setIsModalOpen(true);
@@ -66,7 +66,7 @@ export function HybridCategoriesTanstack({ categories, className }: HybridCatego
   return (
     <>
       <CategoriesCarousel 
-        categories={getFeaturedCategories()} 
+        categories={featuredCategories} 
         onViewAllClick={openModal}
         className={className}
       />

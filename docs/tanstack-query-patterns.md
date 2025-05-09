@@ -250,6 +250,46 @@ This pattern ensures:
 3. The creation is optimized with useMemo to avoid unnecessary recalculations
 4. The hook consumers get the fully processed data with proper types
 
+### Expensive Derivation with useMemo
+
+For components that perform expensive calculations based on query data, always use `useMemo` to prevent unnecessary recalculations on re-renders:
+
+```typescript
+// components/providers/categories-modal-tanstack.tsx
+function CategoriesModalTanstack({ isOpen, onClose }) {
+  const { data: categories, isLoading } = useCategories();
+  const categoriesData = categories || [];
+  
+  // Memoize expensive data transformation operations
+  const categoriesByGroup = useMemo(() => {
+    if (isLoading || !categoriesData.length) return {};
+    return categorizeByGroup(categoriesData);
+  }, [isLoading, categoriesData]);
+  
+  // Component rendering...
+}
+```
+
+```typescript
+// components/providers/hybrid-categories-tanstack.tsx
+function HybridCategoriesTanstack({ categories, className }) {
+  // Memoize featured categories calculation
+  const featuredCategories = useMemo(() => {
+    // Logic to filter and select featured categories
+    // ...
+    return featured;
+  }, [categories]);
+  
+  // Component rendering using featuredCategories...
+}
+```
+
+When implementing such optimizations, make sure to:
+1. Always include all dependencies that the calculation depends on
+2. Keep the computation inside the `useMemo` as pure as possible
+3. Use proper TypeScript interfaces instead of `any` to ensure type safety
+4. Consider extracting complex logic into separate utility functions
+
 ## Error Handling Patterns
 
 Follow these patterns when handling errors in your query and mutation functions:

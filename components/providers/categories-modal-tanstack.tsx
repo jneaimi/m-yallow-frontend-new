@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -21,9 +21,17 @@ const CATEGORY_GROUPS = {
   SERVICES: "Services & Maintenance"
 };
 
+// Define interface for category type
+interface CategoryForGrouping {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  description?: string;
+}
+
 // Function to assign categories to groups
-function categorizeByGroup(categories: any[]): Record<string, any[]> {
-  const groups: Record<string, any[]> = {
+function categorizeByGroup(categories: CategoryForGrouping[]): Record<string, CategoryForGrouping[]> {
+  const groups: Record<string, CategoryForGrouping[]> = {
     [CATEGORY_GROUPS.AUTOMOTIVE]: [],
     [CATEGORY_GROUPS.CONSTRUCTION]: [],
     [CATEGORY_GROUPS.INDUSTRIAL]: [],
@@ -87,7 +95,11 @@ export function CategoriesModalTanstack({ isOpen, onClose }: CategoriesModalTans
   // Use raw categories or fallback to empty array
   const categoriesData = categories || [];
   
-  const categoriesByGroup = isLoading ? {} : categorizeByGroup(categoriesData);
+  // Memoize the categorization to prevent recalculation on each render
+  const categoriesByGroup = useMemo(() => {
+    if (isLoading || !categoriesData.length) return {};
+    return categorizeByGroup(categoriesData);
+  }, [isLoading, categoriesData]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

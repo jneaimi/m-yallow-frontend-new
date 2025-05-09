@@ -34,7 +34,14 @@ export default async function ProvidersLayout({
           }));
         } catch (error) {
           console.error("Error prefetching categories:", error);
-          return featuredCategories; // Use fallback data
+          // Map featuredCategories to ensure consistent data shape with successful fetch path
+          return featuredCategories.map(category => ({
+            id: String(category.id),
+            name: category.name,
+            // If the static fallback has a React element, mark it for client-side processing
+            icon: typeof category.icon === 'string' ? category.icon : '__REACT_ELEMENT__',
+            description: `Find ${category.name} providers and services`
+          }));
         }
       },
     });
