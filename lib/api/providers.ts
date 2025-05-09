@@ -94,9 +94,6 @@ export interface RecentProvider {
  * @returns Transformed provider for client components
  */
 export function transformProvider(apiProvider: ApiProvider): Provider {
-  // Log the structure of the API provider object
-  console.log("Transforming provider:", JSON.stringify(apiProvider, null, 2));
-  
   // Ensure we have a valid object
   if (!apiProvider || typeof apiProvider !== 'object') {
     console.error("Invalid provider data:", apiProvider);
@@ -107,6 +104,15 @@ export function transformProvider(apiProvider: ApiProvider): Provider {
     };
   }
   
+  // Use a fallback hero image URL if none exists
+  let heroImageUrl = apiProvider.hero_image_url || null;
+  // Only call getProviderHeroImageUrl if ID is valid to prevent unnecessary API calls
+  if (!heroImageUrl && apiProvider.id) {
+    heroImageUrl = getProviderHeroImageUrl(apiProvider.id);
+  } else if (!heroImageUrl) {
+    heroImageUrl = getFallbackImageUrl();
+  }
+  
   return {
     id: apiProvider.id,
     name: apiProvider.name || "Unnamed Provider",
@@ -114,7 +120,7 @@ export function transformProvider(apiProvider: ApiProvider): Provider {
     location: apiProvider.location,
     aboutSnippet: apiProvider.about,
     about: apiProvider.about,
-    heroImageUrl: apiProvider.hero_image_url ? apiProvider.hero_image_url : getProviderHeroImageUrl(apiProvider.id),
+    heroImageUrl,
     createdAt: apiProvider.created_at,
     updatedAt: apiProvider.updated_at,
     // Address components

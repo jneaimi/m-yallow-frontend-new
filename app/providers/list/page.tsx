@@ -1,22 +1,11 @@
 import { Suspense } from "react";
 import { SearchBar } from "@/components/providers/search-bar";
-import { ProviderCard } from "@/components/providers/provider-card";
-import { ResponsiveContainer, ResponsiveGrid } from "@/components/ui/responsive";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationPrevious, 
-  PaginationNext,
-  PaginationEllipsis
-} from "@/components/ui/pagination";
-import { 
-  PROVIDER_API, 
-  Provider, 
-  ProvidersListResponse, 
-  transformProvider 
-} from "@/lib/api/providers";
+import { ResponsiveContainer } from "@/components/ui/responsive";
+import { getQueryClient } from '@/lib/query/client';
+import { queryKeys } from '@/lib/query/keys';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { fetchProvidersList } from '@/lib/api/providers/list';
+import { ProvidersListClient } from '@/components/providers/providers-list-client';
 
 /**
  * Props for the List page component
@@ -30,264 +19,6 @@ interface ListPageProps {
     location?: string;
     category?: string;
   }>;
-}
-
-// We're now using ProvidersListResponse from the centralized API service
-
-// Cache revalidation time in seconds
-const CACHE_REVALIDATE_TIME = 60;
-
-/**
- * Fetches the list of providers from the API with pagination
- * Falls back to mock data if the API call fails
- * 
- * @param page - Page number (1-based)
- * @param pageSize - Number of items per page
- * @param name - Optional filter by provider name
- * @param location - Optional filter by provider location
- * @param category - Optional filter by provider category
- * @returns Processed provider data with pagination info
- */
-async function getProvidersList(
-  page: number = 1, 
-  pageSize: number = 12,
-  name: string = '',
-  location: string = '',
-  category: string = ''
-): Promise<ProvidersListResponse> {
-  try {
-    // Create query parameters - only include non-empty filter params
-    const params = new URLSearchParams({
-      page: page.toString(),
-      pageSize: pageSize.toString()
-    });
-    
-    // Only append non-empty filter parameters
-    if (name) params.append("name", name);
-    if (location) params.append("location", location);
-    if (category) params.append("category", category);
-    
-    const res = await fetch(
-      `${PROVIDER_API.LIST}?${params}`,
-      { next: { revalidate: CACHE_REVALIDATE_TIME } }
-    );
-    
-    if (!res.ok) {
-      throw new Error(`Failed to fetch providers list: ${res.status} ${res.statusText}`);
-    }
-    
-    const data = await res.json() as ProvidersListResponse;
-    
-    // Transform API providers to client provider format
-    const processedProviders = data.providers.map(transformProvider);
-    
-    return {
-      providers: processedProviders,
-      total: data.total,
-      page: data.page,
-      pageSize: data.pageSize
-    };
-  } catch (error) {
-    console.error('Error fetching providers list:', error instanceof Error ? error.message : String(error));
-    
-    // Return mock data as fallback
-    return {
-      providers: [
-        {
-          id: 1,
-          name: "Sunshine Wellness Center",
-          contact: null,
-          location: null,
-          heroImageUrl: null,
-          aboutSnippet: "Providing holistic wellness services with a focus on mental health and physical wellbeing.",
-          createdAt: new Date().toISOString(),
-          categories: [
-            { id: 2, name: "Test Category 1", icon: "test-icon-1" }
-          ]
-        },
-        {
-          id: 2,
-          name: "Tech Solutions Inc",
-          contact: null,
-          location: null,
-          heroImageUrl: null,
-          aboutSnippet: "Cutting-edge technology solutions for businesses of all sizes. Specializing in cloud services and cybersecurity.",
-          createdAt: new Date().toISOString(),
-          categories: [
-            { id: 3, name: "Test Category 2", icon: "test-icon-1" }
-          ]
-        },
-        {
-          id: 3,
-          name: "Green Earth Landscaping",
-          contact: null,
-          location: null,
-          heroImageUrl: null,
-          aboutSnippet: "Sustainable landscaping and garden design with eco-friendly practices and native plant expertise.",
-          createdAt: new Date().toISOString(),
-          categories: [
-            { id: 2, name: "Test Category 1", icon: "test-icon-1" },
-            { id: 3, name: "Test Category 2", icon: "test-icon-1" }
-          ]
-        }
-      ],
-      total: 3,
-      page: page,
-      pageSize: pageSize
-    };
-  }
-}
-
-function PaginationControls({ 
-  currentPage, 
-  totalPages, 
-  pageSize,
-  name,
-  location,
-  category
-}: { 
-  currentPage: number; 
-  totalPages: number; 
-  pageSize: number;
-  name?: string;
-  location?: string;
-  category?: string;
-}) {
-  // Generate page numbers to show
-  const getPageNumbers = () => {
-    const pages = [];
-    
-    // Always show first page
-    pages.push(1);
-    
-    // Current page neighborhood
-    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
-      if (pages[pages.length - 1] !== i - 1) {
-        // Add ellipsis if there's a gap
-        pages.push(-1);
-      }
-      pages.push(i);
-    }
-    
-    // Always show last page
-    if (totalPages > 1) {
-      if (pages[pages.length - 1] !== totalPages - 1) {
-        // Add ellipsis if there's a gap
-        pages.push(-1);
-      }
-      pages.push(totalPages);
-    }
-    
-    return pages;
-  };
-  
-  const pageNumbers = getPageNumbers();
-  
-  // Create base query params
-  const getQueryParams = (page: number) => {
-    const params = new URLSearchParams({ page: page.toString(), pageSize: pageSize.toString() });
-    if (name) params.append('name', name);
-    if (location) params.append('location', location);
-    if (category) params.append('category', category);
-    return params.toString();
-  };
-  
-  return (
-    <Pagination>
-      <PaginationContent>
-        {currentPage > 1 && (
-          <PaginationItem>
-            <PaginationPrevious href={`/providers/list?${getQueryParams(currentPage - 1)}`} />
-          </PaginationItem>
-        )}
-        
-        {pageNumbers.map((pageNum, index) => (
-          pageNum === -1 ? (
-            <PaginationItem key={`ellipsis-${index}`}>
-              <PaginationEllipsis />
-            </PaginationItem>
-          ) : (
-            <PaginationItem key={pageNum}>
-              <PaginationLink 
-                href={`/providers/list?${getQueryParams(pageNum)}`}
-                isActive={pageNum === currentPage}
-              >
-                {pageNum}
-              </PaginationLink>
-            </PaginationItem>
-          )
-        ))}
-        
-        {currentPage < totalPages && (
-          <PaginationItem>
-            <PaginationNext href={`/providers/list?${getQueryParams(currentPage + 1)}`} />
-          </PaginationItem>
-        )}
-      </PaginationContent>
-    </Pagination>
-  );
-}
-
-async function ProvidersList({ 
-  page, 
-  pageSize,
-  name,
-  location,
-  category
-}: { 
-  page: number; 
-  pageSize: number;
-  name?: string;
-  location?: string;
-  category?: string;
-}) {
-  const { providers, total } = await getProvidersList(page, pageSize, name, location, category);
-  
-  if (providers.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <h3 className="text-xl font-medium mb-2">No providers found</h3>
-        <p className="text-muted-foreground">
-          Try adjusting your filters or check back later
-        </p>
-      </div>
-    );
-  }
-  
-  return (
-    <div>
-      <ResponsiveGrid
-        cols={1}
-        smCols={2}
-        lgCols={3}
-        gap="6"
-      >
-        {providers.map((provider) => (
-          <ProviderCard
-            key={provider.id}
-            id={provider.id}
-            name={provider.name}
-            heroImageUrl={provider.heroImageUrl}
-            aboutSnippet={provider.aboutSnippet}
-            categories={provider.categories}
-          />
-        ))}
-      </ResponsiveGrid>
-      
-      {total > pageSize && (
-        <div className="flex justify-center mt-8">
-          <PaginationControls 
-            currentPage={page} 
-            totalPages={Math.ceil(total / pageSize)} 
-            pageSize={pageSize}
-            name={name}
-            location={location}
-            category={category}
-          />
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default async function ListPage({ searchParams }: ListPageProps) {
@@ -307,6 +38,21 @@ export default async function ListPage({ searchParams }: ListPageProps) {
   const location = params.location || '';
   const category = params.category || '';
   
+  // Initialize QueryClient on the server
+  const queryClient = getQueryClient();
+  
+  try {
+    // Prefetch the initial data on the server
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.provider.list({ page, pageSize, name, location, category }),
+      queryFn: () => fetchProvidersList({ page, pageSize, name, location, category }),
+      retry: 1, // Only retry once to avoid excessive failed requests
+    });
+  } catch (error) {
+    console.error('Failed to prefetch providers data:', error);
+    // We'll let the client component handle displaying the error
+  }
+  
   return (
     <div className="py-8 md:py-12">
       <ResponsiveContainer maxWidth="xl">
@@ -316,13 +62,15 @@ export default async function ListPage({ searchParams }: ListPageProps) {
         </div>
         
         <Suspense fallback={<div className="text-center py-12">Loading providers...</div>}>
-          <ProvidersList 
-            page={page} 
-            pageSize={pageSize} 
-            name={name}
-            location={location}
-            category={category}
-          />
+          <HydrationBoundary state={dehydrate(queryClient)}>
+            <ProvidersListClient 
+              initialPage={page} 
+              initialPageSize={pageSize} 
+              initialName={name}
+              initialLocation={location}
+              initialCategory={category}
+            />
+          </HydrationBoundary>
         </Suspense>
       </ResponsiveContainer>
     </div>
