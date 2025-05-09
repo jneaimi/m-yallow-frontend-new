@@ -19,10 +19,15 @@ interface CategoryPageProps {
 async function fetchProvidersByCategory(categoryId: string) {
   console.log(`[Server] Fetching providers for category ID: ${categoryId}`);
   
-  const endpoint = `${PROVIDER_API.PUBLIC}?category=${categoryId}`;
+  const endpoint = `${PROVIDER_API.PUBLIC}?category=${encodeURIComponent(categoryId)}`;
   
   try {
-    const res = await fetch(endpoint, { next: { revalidate: 60 } });
+    // Use the isServer check for applying Next.js specific options
+    const isServer = typeof window === 'undefined';
+    const res = await fetch(
+      endpoint,
+      isServer ? ({ next: { revalidate: 60 } } as RequestInit & { next: { revalidate: number } }) : undefined
+    );
     
     if (!res.ok) {
       throw new Error(`Failed to fetch providers: ${res.status} ${res.statusText}`);
@@ -30,21 +35,34 @@ async function fetchProvidersByCategory(categoryId: string) {
     
     const data = await res.json();
     
-    if (!data.providers || !Array.isArray(data.providers)) {
-      return [];
+    if (!data.providers) {
+      throw new Error('Unexpected API response format: "providers" field is missing');
+    }
+    
+    if (!Array.isArray(data.providers)) {
+      throw new Error('Unexpected API response format: "providers" is not an array');
     }
     
     return data.providers.map(transformProvider);
   } catch (error) {
     console.error(`[Server] Error fetching providers:`, error);
-    return [];
+    throw error; // Re-throw for proper error handling
   }
+}
+
+/**
+ * Category interface
+ */
+interface Category {
+  id: string | number;
+  name: string;
+  icon?: string;
 }
 
 /**
  * Get category name by ID
  */
-async function getCategoryName(categoryId: string, categories: any[] = []): Promise<string> {
+async function getCategoryName(categoryId: string, categories: Category[] = []): Promise<string> {
   if (!Array.isArray(categories)) {
     return `Category ${categoryId}`;
   }
@@ -57,7 +75,9 @@ async function getCategoryName(categoryId: string, categories: any[] = []): Prom
  * Main category page component with TanStack Query integration
  */
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const categoryId = params.id;
+  // Ensure params is fully resolved before accessing properties
+  const resolvedParams = await Promise.resolve(params);
+  const categoryId = resolvedParams.id;
   const queryClient = getQueryClient();
   
   // Prefetch both queries in parallel
@@ -83,8 +103,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   ]);
   
   // Get the categories data to determine the category name
-  const categories = queryClient.getQueryData(queryKeys.categories.public()) as any[] | undefined;
-  const categoryName = await getCategoryName(categoryId, categories || []);
+  const categories = queryClient.getQueryData<Category[]>(queryKeys.categories.public()) ?? [];
+  const categoryName = await getCategoryName(categoryId, categories);
   
   return (
     <div className="py-8 md:py-12">

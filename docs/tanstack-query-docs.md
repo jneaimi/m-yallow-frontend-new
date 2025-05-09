@@ -139,8 +139,10 @@ heroImageUrl: apiProvider.hero_image_url || getFallbackImageUrl(),
 **Solution**:
 - Implement detailed error handling in API functions.
 - Log both the error message and the response status/text.
-- Handle JSON parsing errors separately from fetch errors.
+- Always throw errors rather than returning empty arrays or nulls to properly propagate errors to the UI.
+- Use separate error handling for data structure validation vs. network errors.
 - Limit retry attempts for failed queries to avoid excessive failed requests.
+- Never silently handle errors by returning empty arrays or null values - this masks issues and makes debugging harder.
 
 ```typescript
 try {
@@ -159,10 +161,19 @@ try {
     throw new Error('Failed to parse response data');
   }
   
-  return data;
+  // Validate response structure with specific error messages
+  if (!data.providers) {
+    throw new Error('Unexpected API response format: "providers" field is missing');
+  }
+  
+  if (!Array.isArray(data.providers)) {
+    throw new Error('Unexpected API response format: "providers" is not an array');
+  }
+  
+  return transformData(data.providers);
 } catch (error) {
   console.error('Error in API call:', error);
-  throw error; // Re-throw for TanStack Query to handle
+  throw error; // Re-throw for TanStack Query to handle - NEVER return empty arrays or nulls
 }
 ```
 
@@ -243,7 +254,76 @@ const categories = queryClient.getQueryData(queryKeys.categories.public());
 // Now we know categories is an array of category objects
 ```
 
-## Additional Resources
+### 6. Optimizing Query Execution with the `enabled` Option
+
+**Issue**: Unnecessary API calls when parameters are undefined or empty, especially during initial renders.
+
+**Solution**:
+- Use the `enabled` option to conditionally run queries only when all required parameters are available.
+- This prevents unnecessary network requests, error states, and UI flickers.
+- Particularly useful with route parameters that may be undefined during initial renders.
+
+```typescript
+// Without optimization - will trigger API calls even with invalid/missing categoryId
+export function useProvidersByCategory(categoryId: string) {
+  return useQuery({
+    queryKey: queryKeys.provider.byCategory(categoryId),
+    queryFn: () => fetchProvidersByCategory(categoryId),
+    staleTime: 60 * 1000
+  });
+}
+
+// With optimization - only runs when categoryId is truthy
+export function useProvidersByCategory(categoryId: string) {
+  return useQuery({
+    queryKey: queryKeys.provider.byCategory(categoryId),
+    queryFn: () => fetchProvidersByCategory(categoryId),
+    staleTime: 60 * 1000,
+    enabled: Boolean(categoryId) // Only run when we have a valid categoryId
+  });
+}
+```
+
+### 7. Environment-Aware Fetch Options
+
+**Issue**: Using Next.js-specific options in browser environments or vice versa.
+
+**Solution**:
+- Detect the environment before applying platform-specific options.
+- For Next.js, use the `next: { revalidate }` option only on the server.
+- This improves bundle size through better tree-shaking and avoids potential type issues.
+
+```typescript
+// Check if code is running on the server
+const isServer = typeof window === 'undefined';
+
+// Apply Next.js cache options only on the server
+const res = await fetch(
+  endpoint,
+  isServer ? 
+    ({ next: { revalidate: 60 } } as RequestInit & { next: { revalidate: number } }) : 
+    undefined
+);
+```
+
+### 8. URL Parameter Encoding
+
+**Issue**: Potential security and functionality issues when using unencoded URL parameters.
+
+**Solution**:
+- Always use `encodeURIComponent()` for dynamic parameters in URL strings.
+- This prevents issues with special characters (spaces, ampersands, etc.) that could break your URLs.
+- Critical for category IDs, search queries, or any user-provided inputs used in URLs.
+
+```typescript
+// Unsafe - could break if categoryId contains special characters
+const endpoint = `${PROVIDER_API.PUBLIC}?category=${categoryId}`;
+
+// Safe - properly encodes any special characters
+const endpoint = `${PROVIDER_API.PUBLIC}?category=${encodeURIComponent(categoryId)}`;
+```
+
+
 
 - [Official TanStack Query Documentation](https://tanstack.com/query/latest/docs/react/overview)
 - [TanStack Query Examples Repository](https://github.com/TanStack/query/tree/main/examples)

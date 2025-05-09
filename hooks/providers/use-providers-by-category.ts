@@ -13,7 +13,7 @@ async function fetchProvidersByCategory(categoryId: string): Promise<Provider[]>
   console.log(`Fetching providers for category ID: ${categoryId}`);
   
   // Use the public providers endpoint with category filter
-  const endpoint = `${PROVIDER_API.PUBLIC}?category=${categoryId}`;
+  const endpoint = `${PROVIDER_API.PUBLIC}?category=${encodeURIComponent(categoryId)}`;
   
   try {
     console.log(`Using public providers endpoint: ${endpoint}`);
