@@ -5,7 +5,7 @@ import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { getQueryClient } from "@/lib/query/client";
 import { queryKeys } from "@/lib/query/keys";
 import { PROVIDER_API, transformProvider } from "@/lib/api/providers";
-import { fetchPublicCategories } from "@/lib/api/categories";
+import { Category, categoriesQueryFn } from "@/lib/api/categories";
 
 interface CategoryPageProps {
   params: {
@@ -51,15 +51,6 @@ async function fetchProvidersByCategory(categoryId: string) {
 }
 
 /**
- * Category interface
- */
-interface Category {
-  id: string | number;
-  name: string;
-  icon?: string;
-}
-
-/**
  * Get category name by ID
  */
 async function getCategoryName(categoryId: string, categories: Category[] = []): Promise<string> {
@@ -91,14 +82,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     // Prefetch categories for the category name
     queryClient.prefetchQuery({
       queryKey: queryKeys.categories.public(),
-      queryFn: async () => {
-        const data = await fetchPublicCategories();
-        return data.categories.map(category => ({
-          id: String(category.id),
-          name: category.name,
-          icon: category.icon
-        }));
-      },
+      queryFn: categoriesQueryFn,
     })
   ]);
   

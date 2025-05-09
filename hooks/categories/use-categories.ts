@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query/keys';
-import { fetchPublicCategories } from '@/lib/api/categories';
+import { categoriesQueryFn, Category as ApiCategory } from '@/lib/api/categories';
 import { getIconByName } from '@/lib/api/icon-mapping';
 import { featuredCategories } from '@/components/providers/category-icons';
 import React, { useMemo } from 'react';
@@ -29,13 +29,10 @@ export function useCategories() {
     queryKey: queryKeys.categories.public(),
     queryFn: async () => {
       try {
-        const data = await fetchPublicCategories();
-        
-        // Return raw categories with icon as string for caching
-        return data.categories.map(category => ({
-          id: String(category.id),
-          name: category.name,
-          icon: category.icon, // Store as string for caching
+        // Use the shared queryFn and then enrich with description
+        const categories = await categoriesQueryFn();
+        return categories.map(category => ({
+          ...category,
           description: `Find ${category.name} providers and services`
         }));
       } catch (error) {

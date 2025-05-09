@@ -177,53 +177,67 @@ try {
 }
 ```
 
-### 4. Consistent Data Transformation
+### 4. Shared Data Transformation Functions
 
-**Issue**: Runtime errors when different components accessing the same query key expect different data structures.
+**Issue**: Duplicated transformation logic across components and hooks, leading to inconsistent data structures and potential bugs.
 
 **Solution**:
-- Ensure all hooks using the same query key transform the data in the same way
-- Standardize on a consistent output format for each query key
-- Use the `queryFn` to transform the API response into the expected format
+- Create dedicated transformation functions in your API modules
+- Use shared query functions that can be imported directly
+- Ensure all components accessing the same data use the same transformation logic
+- Follow a "transform at the boundary" pattern where data is normalized immediately after API calls
 
 ```typescript
-// Consistent data transformation across hooks
+// In your API module (e.g., categories.ts)
+export interface ApiCategory {
+  id: number;
+  name: string;
+  icon: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
+// Single transformation function for consistent formatting
+export function transformCategory(category: ApiCategory): Category {
+  return {
+    id: String(category.id),
+    name: category.name,
+    icon: category.icon
+  };
+}
+
+// Helper for transforming arrays
+export function transformCategories(categories: ApiCategory[]): Category[] {
+  return categories.map(transformCategory);
+}
+
+// Shared query function for TanStack Query
+export async function categoriesQueryFn() {
+  const data = await fetchPublicCategories();
+  return transformCategories(data.categories);
+}
+
+// Usage in hooks
 export function useCategories() {
   return useQuery({
     queryKey: queryKeys.categories.public(),
-    queryFn: async () => {
-      const data = await fetchPublicCategories();
-      // Transform API response to standard format
-      return data.categories.map(category => ({
-        id: String(category.id),
-        name: category.name,
-        icon: category.icon
-      }));
-    }
+    // Simply import and use the shared query function
+    queryFn: categoriesQueryFn
   });
 }
 
-// Another hook using the same query key must expect the same structure
-export function useCategoryName(categoryId) {
-  const query = useQuery({
-    queryKey: queryKeys.categories.public(),
-    // Same transformation as above to maintain consistency
-    queryFn: async () => {
-      const data = await fetchPublicCategories();
-      return data.categories.map(category => ({
-        id: String(category.id),
-        name: category.name,
-        icon: category.icon
-      }));
-    }
-  });
-  
-  // Now we can safely assume query.data is an array of category objects
-  const categoryName = query.data?.find(cat => String(cat.id) === categoryId)?.name || `Category ${categoryId}`;
-  
-  return { ...query, categoryName };
-}
+// Server-side prefetching with the same function
+await queryClient.prefetchQuery({
+  queryKey: queryKeys.categories.public(),
+  queryFn: categoriesQueryFn
+});
 ```
+
+This approach ensures that all components receive exactly the same data structure when accessing the same query key, preventing subtle bugs that can occur with inconsistent transformations.
 
 ### 5. Server-Side Prefetching Alignment
 
@@ -322,6 +336,40 @@ const endpoint = `${PROVIDER_API.PUBLIC}?category=${categoryId}`;
 // Safe - properly encodes any special characters
 const endpoint = `${PROVIDER_API.PUBLIC}?category=${encodeURIComponent(categoryId)}`;
 ```
+
+### 9. Shared Query Functions with Transformation
+
+**Issue**: Inconsistent data transformation across components and hooks using the same query key.
+
+**Solution**:
+- Export dedicated query functions from your API modules that handle both fetching and transformation
+- Import and use these query functions directly in both server and client components
+- This ensures that all components working with the same data receive identical structures
+
+```typescript
+// In your lib/api/categories.ts file:
+export async function categoriesQueryFn() {
+  const data = await fetchPublicCategories();
+  return transformCategories(data.categories);
+}
+
+// In your server component:
+await queryClient.prefetchQuery({
+  queryKey: queryKeys.categories.public(),
+  queryFn: categoriesQueryFn,
+});
+
+// In your client hook:
+export function useCategories() {
+  return useQuery({
+    queryKey: queryKeys.categories.public(),
+    queryFn: categoriesQueryFn,
+    // Other options...
+  });
+}
+```
+
+By sharing the query function, you avoid duplicating transformation logic and ensure that server-side prefetching produces exactly the same data structure that client components expect.
 
 
 

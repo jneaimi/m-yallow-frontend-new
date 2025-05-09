@@ -14,10 +14,40 @@ export interface ApiCategory {
   icon: string;
 }
 
+// Transformed category interface for client use
+export interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+  description?: string;
+}
+
 // Response interface for categories list
 export interface CategoriesListResponse {
   categories: ApiCategory[];
   total: number;
+}
+
+/**
+ * Transform API category to client category
+ * @param category API category object
+ * @returns Transformed category for client use
+ */
+export function transformCategory(category: ApiCategory): Category {
+  return {
+    id: String(category.id),
+    name: category.name,
+    icon: category.icon
+  };
+}
+
+/**
+ * Transform API categories list to client format
+ * @param categories Array of API category objects
+ * @returns Array of transformed categories for client use
+ */
+export function transformCategories(categories: ApiCategory[]): Category[] {
+  return categories.map(transformCategory);
 }
 
 /**
@@ -51,4 +81,13 @@ export async function fetchPublicCategories(): Promise<CategoriesListResponse> {
     console.error("Error fetching categories:", error);
     throw error;
   }
+}
+
+/**
+ * QueryFn to use with TanStack Query for fetching and transforming categories
+ * Can be shared between client and server components
+ */
+export async function categoriesQueryFn() {
+  const data = await fetchPublicCategories();
+  return transformCategories(data.categories);
 }
