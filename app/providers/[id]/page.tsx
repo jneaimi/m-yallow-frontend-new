@@ -1,119 +1,70 @@
 import { notFound } from "next/navigation";
-import { PROVIDER_API, ApiProvider, transformProvider } from "@/lib/api/providers";
+import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
+import { getQueryClient } from '@/lib/query/client';
+import { queryKeys } from '@/lib/query/keys';
+import { fetchProvider } from '@/hooks/providers/use-provider';
+import { ProviderDetailClient } from '@/components/providers/provider-detail-client';
 
 interface ProviderPageProps {
-  params: Promise<{ id: string }>;
-}
-
-async function getProvider(id: string | number) {
-  try {
-    const url = PROVIDER_API.DETAIL(id);
-    console.log(`Fetching provider from: ${url}`);
-    
-    const res = await fetch(url, { next: { revalidate: 60 } });
-    
-    if (!res.ok) {
-      console.error(`API response not OK: ${res.status} ${res.statusText}`);
-      if (res.status === 404) return null;
-      throw new Error(`Failed to fetch provider: ${res.status} ${res.statusText}`);
-    }
-    
-    const provider = await res.json() as ApiProvider;
-    console.log(`Provider data received:`, JSON.stringify(provider, null, 2));
-    
-    // Transform API provider to client provider format
-    const transformedProvider = transformProvider(provider);
-    return transformedProvider;
-  } catch (error) {
-    console.error(`Error fetching provider ${id}:`, error instanceof Error ? error.message : String(error));
-    // Continue to fallback data
-  }
-  
-  // Fallback to mock data if API call fails
-  const providerId = typeof id === 'string' ? parseInt(id) : id;
-  if (providerId < 1 || providerId > 2) return null;
-  
-  // Mock data for fallback
-  const mockProviders = [
-    {
-      id: 1,
-      name: "Sunshine Wellness Center",
-      contact: "contact@sunshinewellness.com",
-      location: "123 Wellness Ave, Healthytown, CA 94105, United States",
-      about: "Providing holistic wellness services with a focus on mental health and physical wellbeing. Our team of certified professionals offers a range of services including massage therapy, nutritional counseling, meditation classes, and personalized wellness plans.",
-      heroImageUrl: null,
-      createdAt: "2023-11-01T12:00:00Z",
-      street: "123 Wellness Ave",
-      city: "Healthytown",
-      state: "CA",
-      postalCode: "94105",
-      country: "United States",
-      latitude: 37.789,
-      longitude: -122.401,
-      categories: [
-        { id: 2, name: "Test Category 1", icon: "test-icon-1" },
-        { id: 3, name: "Test Category 2", icon: "test-icon-1" }
-      ]
-    },
-    {
-      id: 2,
-      name: "Tech Solutions Inc",
-      contact: "info@techsolutions.com",
-      location: "456 Tech Blvd, Innovation City, NY 10001, United States",
-      about: "Cutting-edge technology solutions for businesses of all sizes. Specializing in cloud services and cybersecurity.",
-      heroImageUrl: null,
-      createdAt: "2023-10-15T09:30:00Z",
-      street: "456 Tech Blvd",
-      city: "Innovation City",
-      state: "NY",
-      postalCode: "10001",
-      country: "United States",
-      latitude: 40.7128,
-      longitude: -74.006,
-      categories: [
-        { id: 2, name: "Test Category 1", icon: "test-icon-1" }
-      ]
-    }
-  ];
-  
-  // Return mock data for the requested ID, or null if not found
-  return mockProviders.find(p => p.id === providerId) || null;
+  params: { id: string };
 }
 
 // Generate metadata for this page
 export async function generateMetadata({ params }: ProviderPageProps) {
-  // Await the params object before accessing its properties
-  const resolvedParams = await params;
-  const provider = await getProvider(resolvedParams.id);
-  
-  if (!provider) {
+  try {
+    // Fetch the provider data directly for metadata generation
+    const provider = await fetchProvider(params.id);
+    
+    if (!provider) {
+      return {
+        title: 'Provider not found',
+        description: 'The requested provider could not be found'
+      };
+    }
+
     return {
-      title: 'Provider not found',
-      description: 'The requested provider could not be found'
+      title: `${provider.name} | Provider Profile`,
+      description: provider.about ? 
+        (provider.about.length > 160 ? `${provider.about.substring(0, 157)}...` : provider.about) 
+        : `View details about ${provider.name}`,
+      openGraph: {
+        images: provider.heroImageUrl ? [provider.heroImageUrl] : []
+      }
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    return {
+      title: 'Provider Details',
+      description: 'View provider details'
     };
   }
-
-  return {
-    title: `${provider.name} | Provider Profile`,
-    description: provider.about ? 
-      (provider.about.length > 160 ? `${provider.about.substring(0, 157)}...` : provider.about) 
-      : `View details about ${provider.name}`,
-    openGraph: {
-      images: provider.heroImageUrl ? [provider.heroImageUrl] : []
-    }
-  };
 }
 
 export default async function ProviderPage({ params }: ProviderPageProps) {
-  // Await the params object before accessing its properties
-  const resolvedParams = await params;
-  const provider = await getProvider(resolvedParams.id);
-
-  if (!provider) {
-    notFound();
+  const queryClient = getQueryClient();
+  
+  try {
+    // Prefetch the provider data on the server
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.provider.detail(parseInt(params.id)),
+      queryFn: () => fetchProvider(params.id),
+    });
+    
+    // Check if the provider exists to handle notFound()
+    const provider = queryClient.getQueryData(queryKeys.provider.detail(parseInt(params.id)));
+    
+    if (!provider) {
+      notFound();
+    }
+    
+    // Render the client component with the hydrated query client
+    return (
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <ProviderDetailClient providerId={params.id} />
+      </HydrationBoundary>
+    );
+  } catch (error) {
+    console.error('Error fetching provider:', error);
+    throw error; // Let Next.js handle the error
   }
-
-  // Render the client component for interactive UI
-  const ProviderDetailClient = (await import("@/components/providers/provider-detail-client")).ProviderDetailClient;
-  return <ProviderDetailClient provider={provider} />;
 }

@@ -15,90 +15,48 @@ import { BookmarkButton } from "@/components/bookmarks/bookmark-button";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { ReviewList } from "@/components/reviews/review-list";
 import { getFallbackImageUrl } from "@/lib/image-utils";
+import { Category } from "@/lib/api/providers";
 import { ProviderLocationMap } from "@/components/maps/provider-location-map";
 import { ProviderLocationDetails } from "@/components/providers/provider-location-details";
 import { ProviderSchemaMarkup } from "@/components/providers/provider-schema-markup";
 import { ProviderContactForm } from "@/components/providers/provider-contact-form";
-import { MapPin, Mail, Calendar, Star, ChevronLeft, Loader2 } from "lucide-react";
+import { MapPin, Mail, Calendar, Star, ChevronLeft } from "lucide-react";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { useProvider } from "@/hooks/providers/use-provider";
 import { toast } from "sonner";
 
 interface ProviderDetailClientProps {
-  providerId: string;
+  provider: {
+    id: number;
+    name: string;
+    contact: string;
+    location: string;
+    about: string;
+    heroImageUrl: string;
+    createdAt: string;
+    categories?: Category[];
+    // Address components
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+    // Geographic coordinates
+    latitude?: number;
+    longitude?: number;
+  };
 }
 
-export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) {
-  const { data: provider, isLoading, error } = useProvider(providerId);
+export function ProviderDetailClient({ provider }: ProviderDetailClientProps) {
   const [imgError, setImgError] = React.useState(false);
-  
-  // Return loading state while fetching provider data
-  if (isLoading) {
-    return (
-      <div className="py-8 md:py-12 flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary mb-4" />
-          <p className="text-lg font-medium">Loading provider details...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Return error state if provider fetch fails
-  if (error) {
-    return (
-      <div className="py-8 md:py-12">
-        <ResponsiveContainer maxWidth="xl">
-          <Card className="p-6">
-            <CardTitle className="mb-4">Error Loading Provider</CardTitle>
-            <CardDescription>
-              We encountered an error while loading this provider. Please try again later.
-            </CardDescription>
-            <div className="mt-6">
-              <Button asChild>
-                <Link href="/providers/search">
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Back to providers
-                </Link>
-              </Button>
-            </div>
-          </Card>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
-  
-  // Return not found state if provider is null
-  if (!provider) {
-    return (
-      <div className="py-8 md:py-12">
-        <ResponsiveContainer maxWidth="xl">
-          <Card className="p-6">
-            <CardTitle className="mb-4">Provider Not Found</CardTitle>
-            <CardDescription>
-              The provider you are looking for could not be found.
-            </CardDescription>
-            <div className="mt-6">
-              <Button asChild>
-                <Link href="/providers/search">
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Browse providers
-                </Link>
-              </Button>
-            </div>
-          </Card>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
-  
-  const imageUrl = !provider.heroImageUrl || imgError ? getFallbackImageUrl() : provider.heroImageUrl;
-  const createdDate = provider.createdAt ? 
-    new Date(provider.createdAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }) : "Unknown";
+  const imageUrl =
+    !provider.heroImageUrl || imgError
+      ? getFallbackImageUrl()
+      : provider.heroImageUrl;
+  const createdDate = new Date(provider.createdAt).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const { isSignedIn } = useAuth();
   const { isBookmarked, bookmarks } = useBookmarks();
@@ -347,7 +305,9 @@ export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) 
                 <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <p className="text-sm font-medium">Member since</p>
-                  <p className="text-sm">{createdDate}</p>
+                  <p className="text-sm">
+                    {provider.createdAt ? createdDate : "Unknown"}
+                  </p>
                 </div>
               </div>
             </div>
