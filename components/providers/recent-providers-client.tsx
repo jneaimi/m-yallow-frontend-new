@@ -17,7 +17,8 @@ export function RecentProvidersClient({ limit = 6 }: RecentProvidersClientProps)
     isLoading, 
     isError, 
     error, 
-    refetch 
+    refetch,
+    isFetching 
   } = useRecentProviders(limit);
 
   // Handle loading state (should be handled by Suspense in the server component)
@@ -30,8 +31,16 @@ export function RecentProvidersClient({ limit = 6 }: RecentProvidersClientProps)
     return (
       <Alert variant="destructive" className="mb-6">
         <AlertDescription className="flex items-center justify-between">
-          <span>Failed to load recent providers: {error?.message}</span>
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-4">
+          <span>Something went wrong while loading recent providers.</span>
+          {/* eslint-disable-next-line no-console */}
+          {process.env.NODE_ENV !== 'production' && console.error(error)}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled={isFetching}
+            onClick={() => refetch()} 
+            className="ml-4"
+          >
             <RefreshCcw className="h-4 w-4 mr-2" /> Try Again
           </Button>
         </AlertDescription>

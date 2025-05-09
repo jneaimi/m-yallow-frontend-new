@@ -10,16 +10,26 @@ import { PROVIDER_API, Provider, RecentProvider, transformRecentProvider } from 
  * @returns The recent providers
  */
 async function fetchRecentProviders(limit: number = 6): Promise<Provider[]> {
-  const res = await fetch(`${PROVIDER_API.RECENT}?limit=${limit}`, { 
+  const res = await fetch(`${PROVIDER_API.RECENT}?limit=${limit}`, {
+    headers: { Accept: 'application/json' },
     next: { revalidate: 60 }  // Revalidate every 60 seconds
   });
   
   if (!res.ok) {
-    throw new Error('Failed to fetch recent providers');
+    throw new Error(
+      `Failed to fetch recent providers: ${res.status} ${res.statusText}`
+    );
   }
   
   // Parse the response
-  const providers = await res.json() as RecentProvider[];
+  let providers: RecentProvider[] = [];
+  try {
+    providers = await res.json() as RecentProvider[];
+  } catch (error) {
+    console.warn('Failed to parse providers response:', error);
+    // Return empty array for empty or invalid JSON responses
+    return [];
+  }
   
   // Transform providers for client components
   return providers.map(transformRecentProvider);
@@ -32,7 +42,7 @@ async function fetchRecentProviders(limit: number = 6): Promise<Provider[]> {
  */
 export function useRecentProviders(limit: number = 6) {
   return useQuery({
-    queryKey: queryKeys.provider.list({ type: 'recent', limit }),
+    queryKey: ['providers', 'recent', limit],
     queryFn: () => fetchRecentProviders(limit),
     staleTime: 60 * 1000, // Consider data stale after 1 minute
   });

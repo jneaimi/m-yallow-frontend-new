@@ -18,7 +18,25 @@ Query keys are how TanStack Query identifies unique queries in the cache. We use
 
 ### Structure
 
-Always use the predefined query key factories in `lib/query/keys.ts`:
+We use two approaches for query keys in this project:
+
+#### 1. Array-based Query Keys (Preferred)
+
+For simple queries, use direct array-based query keys:
+
+```typescript
+// Preferred approach for simple queries
+useQuery({
+  queryKey: ['providers', 'recent', limit],
+  queryFn: () => fetchRecentProviders(limit),
+})
+```
+
+This approach ensures stable serialization and prevents cache misses caused by object key order variations.
+
+#### 2. Helper Function Query Keys
+
+For more complex scenarios, use the predefined query key factories in `lib/query/keys.ts`:
 
 ```typescript
 export const queryKeys = {
@@ -31,26 +49,49 @@ export const queryKeys = {
 };
 ```
 
+When using query key factories, prefer passing primitive values (strings, numbers) instead of objects to ensure stable serialization:
+
+```typescript
+// Instead of this (might cause cache misses)
+queryKeys.provider.list({ type: 'recent', limit })
+
+// Use this pattern
+queryKeys.provider.list('recent', limit)
+// Or directly for simpler queries
+['providers', 'recent', limit]
+```
+
 ### Extending Query Keys
 
 When adding new query keys, follow these patterns:
 
-1. **List queries**: Use plural nouns for the key group and include optional params for filtering:
+1. **For simple queries**, use direct array notation:
+
+```typescript
+// Simple queries (preferred)
+['events', 'list', categoryId, page]
+```
+
+2. **For list queries with helper functions**, avoid objects in query keys and use primitive values:
 
 ```typescript
 events: {
   all: ['events'] as const,
-  list: (filters?: EventFilters) => [...queryKeys.events.all, 'list', filters] as const,
+  // Instead of this
+  // list: (filters?: EventFilters) => [...queryKeys.events.all, 'list', filters] as const,
+  
+  // Do this
+  list: (category: string, page: number) => [...queryKeys.events.all, 'list', category, page] as const,
 }
 ```
 
-2. **Detail queries**: Include the identifier in the query key:
+3. **For detail queries**, include the identifier in the query key:
 
 ```typescript
 event: (id: number) => [...queryKeys.events.all, id] as const,
 ```
 
-3. **Related resource queries**: Include both resource identifiers:
+4. **For related resource queries**, include both resource identifiers:
 
 ```typescript
 byProvider: (providerId: number) => [...queryKeys.events.all, 'provider', providerId] as const,
@@ -164,9 +205,83 @@ export function useInfiniteProviders(categoryId: number) {
 }
 ```
 
-## Mutation Patterns
+## Error Handling Patterns
 
-Follow these patterns when implementing mutations:
+Follow these patterns when handling errors in your query and mutation functions:
+
+### Fetch Error Handling
+
+1. **Detailed Error Information**: Include status code and status text in error messages:
+
+```typescript
+if (!response.ok) {
+  throw new Error(
+    `Failed to fetch resource: ${response.status} ${response.statusText}`
+  );
+}
+```
+
+2. **JSON Parsing Error Handling**: Always handle potential JSON parsing errors:
+
+```typescript
+let data = [];
+try {
+  data = await response.json();
+} catch (error) {
+  console.warn('Failed to parse response:', error);
+  return []; // Return empty data rather than crashing
+}
+```
+
+3. **Content Type Enforcement**: Always request the correct content type:
+
+```typescript
+const response = await fetch(url, {
+  headers: { Accept: 'application/json' },
+  // other options...
+});
+```
+
+### UI Error Display
+
+1. **User-Friendly Error Messages**: Never show raw error messages to users:
+
+```tsx
+{isError && (
+  <Alert variant="destructive">
+    <AlertDescription>
+      <span>Something went wrong. Please try again later.</span>
+      {/* Log the actual error for debugging */}
+      {process.env.NODE_ENV !== 'production' && console.error(error)}
+      <Button onClick={() => refetch()} disabled={isFetching}>
+        Try Again
+      </Button>
+    </AlertDescription>
+  </Alert>
+)}
+```
+
+2. **Error Boundary Integration**: Use React Error Boundaries for component-level error handling:
+
+```tsx
+<ErrorBoundary
+  fallback={<ErrorFallback onRetry={() => queryClient.invalidateQueries(...)} />}
+>
+  <YourQueryComponent />
+</ErrorBoundary>
+```
+
+3. **Retry Handling**: Implement retry buttons that show loading state and prevent multiple concurrent requests:
+
+```tsx
+<Button 
+  onClick={() => refetch()} 
+  disabled={isFetching}
+  className="retry-button"
+>
+  {isFetching ? 'Retrying...' : 'Try Again'}
+</Button>
+```
 
 ### Basic Mutation
 
