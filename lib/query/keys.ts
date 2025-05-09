@@ -32,4 +32,11 @@ export const queryKeys = {
     byProvider: (providerId: number) => [...queryKeys.reviews.all, 'byProvider', providerId] as const,
     byUser: (userId: string) => [...queryKeys.reviews.all, 'byUser', userId] as const,
   },
+  
+  // Category-related queries
+  categories: {
+    all: ['categories'] as const,
+    public: () => [...queryKeys.categories.all, 'public'] as const,
+    detail: (id: string) => [...queryKeys.categories.all, 'detail', id] as const,
+  },
 };

@@ -205,6 +205,51 @@ export function useInfiniteProviders(categoryId: number) {
 }
 ```
 
+### Data Transformation Hook
+
+When working with data that includes React components or other non-serializable values, use a two-step approach with useMemo:
+
+```typescript
+// hooks/categories/use-categories.ts
+export function useCategories() {
+  const query = useQuery({
+    queryKey: queryKeys.categories.public(),
+    queryFn: async () => {
+      // Store serializable data in cache (string icons instead of React components)
+      return categories.map(category => ({
+        id: String(category.id),
+        name: category.name,
+        icon: category.icon, // Store as string for caching
+        description: category.description
+      }));
+    },
+  });
+  
+  // Transform the cached data with useMemo to create non-serializable values
+  const processedData = useMemo(() => {
+    if (!query.data) return undefined;
+    
+    return query.data.map(item => ({
+      ...item,
+      // Transform string values to React components
+      icon: typeof item.icon === 'string' ? getIconByName(item.icon) : item.icon
+    }));
+  }, [query.data]);
+  
+  // Return the modified query object with transformed data
+  return {
+    ...query,
+    data: processedData
+  };
+}
+```
+
+This pattern ensures:
+1. Only serializable data is stored in the cache
+2. React components and other non-serializable values are created at render time
+3. The creation is optimized with useMemo to avoid unnecessary recalculations
+4. The hook consumers get the fully processed data with proper types
+
 ## Error Handling Patterns
 
 Follow these patterns when handling errors in your query and mutation functions:

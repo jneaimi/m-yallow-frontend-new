@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { RecentProviders } from "./providers/recent-providers";
 import { SearchBar } from "@/components/providers/search-bar";
 import { HybridPublicCategories } from "./providers/hybrid-public-categories";
@@ -27,13 +27,11 @@ export default function Home() {
         </ResponsiveContainer>
       </section>
 
-      {/* Categories Section - New Hybrid Approach */}
+      {/* Categories Section - Using TanStack Query */}
       <section className="py-16">
         <ResponsiveContainer maxWidth="xl">
           <h2 className="text-3xl font-bold tracking-tight mb-8">Browse Categories</h2>
-          <Suspense fallback={<div className="text-center py-8">Loading categories...</div>}>
-            <HybridPublicCategories />
-          </Suspense>
+          <HybridPublicCategories />
         </ResponsiveContainer>
       </section>
 

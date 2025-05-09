@@ -2,22 +2,25 @@
 
 import React, { useState } from "react";
 import { CategoriesCarousel } from "./categories-carousel";
-import { CategoriesModal } from "./categories-modal";
-import { useCategories } from "@/hooks/categories/use-categories";
+import { CategoriesModalTanstack } from "./categories-modal-tanstack";
 
-interface HybridCategoriesProps {
+interface Category {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  description: string;
+}
+
+interface HybridCategoriesTanstackProps {
+  categories: Category[];
   className?: string;
 }
 
-export function HybridCategories({ className }: HybridCategoriesProps) {
-  const { data: categories = [] } = useCategories();
+export function HybridCategoriesTanstack({ categories, className }: HybridCategoriesTanstackProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Function to select featured categories
   const getFeaturedCategories = () => {
-    // For now, we're manually selecting categories that would be most useful as featured categories
-    // In a real implementation, this would be based on analytics or admin configuration
-    
     // If we have fewer than 12 categories, just return them all
     if (categories.length <= 12) {
       return categories;
@@ -68,10 +71,9 @@ export function HybridCategories({ className }: HybridCategoriesProps) {
         className={className}
       />
       
-      <CategoriesModal 
+      <CategoriesModalTanstack 
         isOpen={isModalOpen} 
         onClose={closeModal} 
-        categories={categories} 
       />
     </>
   );
