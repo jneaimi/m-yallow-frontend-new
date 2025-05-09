@@ -83,6 +83,7 @@ Current status:
 - ❌ API client adapters
 - ❌ Authentication integration
 - ✅ Provider categories refactoring
+- ✅ Provider category detail page (category/[id])
 - ✅ Recent providers implementation
 - ✅ Provider list implementation
 - ❌ Provider detail implementation
@@ -138,8 +139,10 @@ heroImageUrl: apiProvider.hero_image_url || getFallbackImageUrl(),
 **Solution**:
 - Implement detailed error handling in API functions.
 - Log both the error message and the response status/text.
-- Handle JSON parsing errors separately from fetch errors.
+- Always throw errors rather than returning empty arrays or nulls to properly propagate errors to the UI.
+- Use separate error handling for data structure validation vs. network errors.
 - Limit retry attempts for failed queries to avoid excessive failed requests.
+- Never silently handle errors by returning empty arrays or null values - this masks issues and makes debugging harder.
 
 ```typescript
 try {
@@ -158,14 +161,217 @@ try {
     throw new Error('Failed to parse response data');
   }
   
-  return data;
+  // Validate response structure with specific error messages
+  if (!data.providers) {
+    throw new Error('Unexpected API response format: "providers" field is missing');
+  }
+  
+  if (!Array.isArray(data.providers)) {
+    throw new Error('Unexpected API response format: "providers" is not an array');
+  }
+  
+  return transformData(data.providers);
 } catch (error) {
   console.error('Error in API call:', error);
-  throw error; // Re-throw for TanStack Query to handle
+  throw error; // Re-throw for TanStack Query to handle - NEVER return empty arrays or nulls
 }
 ```
 
-## Additional Resources
+### 4. Shared Data Transformation Functions
+
+**Issue**: Duplicated transformation logic across components and hooks, leading to inconsistent data structures and potential bugs.
+
+**Solution**:
+- Create dedicated transformation functions in your API modules
+- Use shared query functions that can be imported directly
+- Ensure all components accessing the same data use the same transformation logic
+- Follow a "transform at the boundary" pattern where data is normalized immediately after API calls
+
+```typescript
+// In your API module (e.g., categories.ts)
+export interface ApiCategory {
+  id: number;
+  name: string;
+  icon: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
+// Single transformation function for consistent formatting
+export function transformCategory(category: ApiCategory): Category {
+  return {
+    id: String(category.id),
+    name: category.name,
+    icon: category.icon
+  };
+}
+
+// Helper for transforming arrays
+export function transformCategories(categories: ApiCategory[]): Category[] {
+  return categories.map(transformCategory);
+}
+
+// Shared query function for TanStack Query
+export async function categoriesQueryFn() {
+  const data = await fetchPublicCategories();
+  return transformCategories(data.categories);
+}
+
+// Usage in hooks
+export function useCategories() {
+  return useQuery({
+    queryKey: queryKeys.categories.public(),
+    // Simply import and use the shared query function
+    queryFn: categoriesQueryFn
+  });
+}
+
+// Server-side prefetching with the same function
+await queryClient.prefetchQuery({
+  queryKey: queryKeys.categories.public(),
+  queryFn: categoriesQueryFn
+});
+```
+
+This approach ensures that all components receive exactly the same data structure when accessing the same query key, preventing subtle bugs that can occur with inconsistent transformations.
+
+### 5. Server-Side Prefetching Alignment
+
+**Issue**: Hydration errors or missing data when prefetched server data doesn't match client-side query expectations.
+
+**Solution**:
+- Ensure server-side prefetching uses the exact same transformation as client-side queries
+- Use the same `queryFn` structure in both server and client components
+- Be cautious when accessing prefetched data on the server, as its structure must match the client expectation
+
+```typescript
+// Server-side prefetching in page.tsx
+await queryClient.prefetchQuery({
+  queryKey: queryKeys.categories.public(),
+  queryFn: async () => {
+    const data = await fetchPublicCategories();
+    // Must match the transformation in client hooks
+    return data.categories.map(category => ({
+      id: String(category.id),
+      name: category.name,
+      icon: category.icon
+    }));
+  }
+});
+
+// When accessing the data on the server
+const categories = queryClient.getQueryData(queryKeys.categories.public());
+// Now we know categories is an array of category objects
+```
+
+### 6. Optimizing Query Execution with the `enabled` Option
+
+**Issue**: Unnecessary API calls when parameters are undefined or empty, especially during initial renders.
+
+**Solution**:
+- Use the `enabled` option to conditionally run queries only when all required parameters are available.
+- This prevents unnecessary network requests, error states, and UI flickers.
+- Particularly useful with route parameters that may be undefined during initial renders.
+
+```typescript
+// Without optimization - will trigger API calls even with invalid/missing categoryId
+export function useProvidersByCategory(categoryId: string) {
+  return useQuery({
+    queryKey: queryKeys.provider.byCategory(categoryId),
+    queryFn: () => fetchProvidersByCategory(categoryId),
+    staleTime: 60 * 1000
+  });
+}
+
+// With optimization - only runs when categoryId is truthy
+export function useProvidersByCategory(categoryId: string) {
+  return useQuery({
+    queryKey: queryKeys.provider.byCategory(categoryId),
+    queryFn: () => fetchProvidersByCategory(categoryId),
+    staleTime: 60 * 1000,
+    enabled: Boolean(categoryId) // Only run when we have a valid categoryId
+  });
+}
+```
+
+### 7. Environment-Aware Fetch Options
+
+**Issue**: Using Next.js-specific options in browser environments or vice versa.
+
+**Solution**:
+- Detect the environment before applying platform-specific options.
+- For Next.js, use the `next: { revalidate }` option only on the server.
+- This improves bundle size through better tree-shaking and avoids potential type issues.
+
+```typescript
+// Check if code is running on the server
+const isServer = typeof window === 'undefined';
+
+// Apply Next.js cache options only on the server
+const res = await fetch(
+  endpoint,
+  isServer ? 
+    ({ next: { revalidate: 60 } } as RequestInit & { next: { revalidate: number } }) : 
+    undefined
+);
+```
+
+### 8. URL Parameter Encoding
+
+**Issue**: Potential security and functionality issues when using unencoded URL parameters.
+
+**Solution**:
+- Always use `encodeURIComponent()` for dynamic parameters in URL strings.
+- This prevents issues with special characters (spaces, ampersands, etc.) that could break your URLs.
+- Critical for category IDs, search queries, or any user-provided inputs used in URLs.
+
+```typescript
+// Unsafe - could break if categoryId contains special characters
+const endpoint = `${PROVIDER_API.PUBLIC}?category=${categoryId}`;
+
+// Safe - properly encodes any special characters
+const endpoint = `${PROVIDER_API.PUBLIC}?category=${encodeURIComponent(categoryId)}`;
+```
+
+### 9. Shared Query Functions with Transformation
+
+**Issue**: Inconsistent data transformation across components and hooks using the same query key.
+
+**Solution**:
+- Export dedicated query functions from your API modules that handle both fetching and transformation
+- Import and use these query functions directly in both server and client components
+- This ensures that all components working with the same data receive identical structures
+
+```typescript
+// In your lib/api/categories.ts file:
+export async function categoriesQueryFn() {
+  const data = await fetchPublicCategories();
+  return transformCategories(data.categories);
+}
+
+// In your server component:
+await queryClient.prefetchQuery({
+  queryKey: queryKeys.categories.public(),
+  queryFn: categoriesQueryFn,
+});
+
+// In your client hook:
+export function useCategories() {
+  return useQuery({
+    queryKey: queryKeys.categories.public(),
+    queryFn: categoriesQueryFn,
+    // Other options...
+  });
+}
+```
+
+By sharing the query function, you avoid duplicating transformation logic and ensure that server-side prefetching produces exactly the same data structure that client components expect.
+
+
 
 - [Official TanStack Query Documentation](https://tanstack.com/query/latest/docs/react/overview)
 - [TanStack Query Examples Repository](https://github.com/TanStack/query/tree/main/examples)
@@ -177,3 +383,4 @@ The following refactoring examples provide real-world implementation details and
 
 1. [Browse Categories TanStack Query Refactoring](./refactoring-examples/categories-tanstack-refactoring.md) - Demonstrates handling React components in the cache and transforming data at render time
 2. [Providers List TanStack Query Refactoring](./refactoring-examples/providers-list-tanstack-refactoring.md) - Shows how to implement pagination, filtering, and handle API authentication requirements
+3. [Category Detail Page TanStack Query Refactoring](./refactoring-examples/category-detail-tanstack-refactoring.md) - Illustrates migrating from server components to a hybrid approach with consistent data transformation

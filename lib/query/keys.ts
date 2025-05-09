@@ -18,6 +18,7 @@ export const queryKeys = {
     list: (params?: Record<string, any>) => [...queryKeys.provider.all, 'list', params] as const,
     detail: (id: number) => [...queryKeys.provider.all, 'detail', id] as const,
     search: (query: string) => [...queryKeys.provider.all, 'search', query] as const,
+    byCategory: (categoryId: string) => [...queryKeys.provider.all, 'byCategory', categoryId] as const,
   },
   
   // Bookmark-related queries
