@@ -17,7 +17,11 @@ async function fetchProvidersByCategory(categoryId: string): Promise<Provider[]>
   
   try {
     console.log(`Using public providers endpoint: ${endpoint}`);
-    const res = await fetch(endpoint, { next: { revalidate: 60 } });
+    const isServer = typeof window === 'undefined';
+    const res = await fetch(
+      endpoint,
+      isServer ? ({ next: { revalidate: 60 } } as RequestInit & { next: { revalidate: number } }) : undefined,
+    );
     
     if (!res.ok) {
       console.error(`API response not OK: ${res.status} ${res.statusText}`);
@@ -29,9 +33,12 @@ async function fetchProvidersByCategory(categoryId: string): Promise<Provider[]>
     console.log(`Response from public providers:`, data);
     
     // Extract providers from the response
-    if (!data.providers || !Array.isArray(data.providers)) {
-      console.error("Unexpected API response format:", data);
-      return [];
+    if (!data.providers) {
+      throw new Error('Unexpected API response format: "providers" field is missing');
+    }
+    
+    if (!Array.isArray(data.providers)) {
+      throw new Error('Unexpected API response format: "providers" is not an array');
     }
     
     const providers = data.providers.map(transformProvider);
@@ -52,5 +59,6 @@ export function useProvidersByCategory(categoryId: string) {
     queryKey: queryKeys.provider.byCategory(categoryId),
     queryFn: () => fetchProvidersByCategory(categoryId),
     staleTime: 60 * 1000, // Match the current revalidation time of 60 seconds
+    enabled: Boolean(categoryId), // only run when we have a valid id
   });
 }
