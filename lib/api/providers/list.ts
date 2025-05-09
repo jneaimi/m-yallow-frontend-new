@@ -1,4 +1,5 @@
-import { PROVIDER_API, ProvidersListResponse, transformProvider } from '../providers';
+import { PROVIDER_API, ProvidersListResponse, transformProvider, Provider } from '../providers';
+import { getFallbackImageUrl } from '@/lib/image-utils';
 
 export interface ProviderListParams {
   page?: number;
@@ -6,6 +7,16 @@ export interface ProviderListParams {
   name?: string;
   location?: string;
   category?: string;
+}
+
+/**
+ * Client-side response interface after providers transformation
+ */
+export interface ProvidersListClientResponse {
+  providers: Provider[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 /**
@@ -21,7 +32,7 @@ export async function fetchProvidersList({
   name = '',
   location = '',
   category = ''
-}: ProviderListParams = {}): Promise<ProvidersListResponse> {
+}: ProviderListParams = {}): Promise<ProvidersListClientResponse> {
   try {
     // Create query parameters - only include non-empty filter params
     const params = new URLSearchParams({
@@ -54,24 +65,26 @@ export async function fetchProvidersList({
     // Transform API providers to client provider format
     const processedProviders = data.providers.map(transformProvider);
     
-    return {
+    const response: ProvidersListClientResponse = {
       providers: processedProviders,
       total: data.total,
       page: data.page,
       pageSize: data.pageSize
     };
+    
+    return response;
   } catch (error) {
     console.error('Error fetching providers list:', error instanceof Error ? error.message : String(error));
     
     // Return mock data as fallback
-    return {
+    const fallback: ProvidersListClientResponse = {
       providers: [
         {
           id: 1,
           name: "Sunshine Wellness Center",
           contact: null,
           location: null,
-          heroImageUrl: null,
+          heroImageUrl: getFallbackImageUrl(), // Using a proper fallback image URL
           aboutSnippet: "Providing holistic wellness services with a focus on mental health and physical wellbeing.",
           createdAt: new Date().toISOString(),
           categories: [
@@ -83,7 +96,7 @@ export async function fetchProvidersList({
           name: "Tech Solutions Inc",
           contact: null,
           location: null,
-          heroImageUrl: null,
+          heroImageUrl: getFallbackImageUrl(),
           aboutSnippet: "Cutting-edge technology solutions for businesses of all sizes. Specializing in cloud services and cybersecurity.",
           createdAt: new Date().toISOString(),
           categories: [
@@ -95,7 +108,7 @@ export async function fetchProvidersList({
           name: "Green Earth Landscaping",
           contact: null,
           location: null,
-          heroImageUrl: null,
+          heroImageUrl: getFallbackImageUrl(),
           aboutSnippet: "Sustainable landscaping and garden design with eco-friendly practices and native plant expertise.",
           createdAt: new Date().toISOString(),
           categories: [
@@ -108,5 +121,7 @@ export async function fetchProvidersList({
       page,
       pageSize
     };
+    
+    return fallback;
   }
 }

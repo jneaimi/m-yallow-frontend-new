@@ -188,7 +188,35 @@ try {
 }
 ```
 
-### 4. Server-Side Errors
+### 4. Type Safety
+
+**Challenge**: The raw API response type (`ProvidersListResponse` with `ApiProvider[]`) differed from the transformed client-side data (`Provider[]`), causing type-safety issues.
+
+**Solution**: Created a separate client-side response interface to accurately represent the transformed data structure:
+
+```typescript
+/**
+ * Client-side response interface after providers transformation
+ */
+export interface ProvidersListClientResponse {
+  providers: Provider[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+```
+
+And updated the function signature to properly reflect the returned data:
+
+```typescript
+export async function fetchProvidersList({
+  // ... parameters
+}: ProviderListParams = {}): Promise<ProvidersListClientResponse> {
+  // ...
+}
+```
+
+### 5. Server-Side Errors
 
 **Challenge**: Server-side prefetching errors could crash the entire page.
 
@@ -205,19 +233,27 @@ try {
 }
 ```
 
-## Code Examples
-
 ### API Function
 
 ```typescript
 // lib/api/providers/list.ts
+/**
+ * Client-side response interface after providers transformation
+ */
+export interface ProvidersListClientResponse {
+  providers: Provider[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export async function fetchProvidersList({
   page = 1, 
   pageSize = 12,
   name = '',
   location = '',
   category = ''
-}: ProviderListParams = {}): Promise<ProvidersListResponse> {
+}: ProviderListParams = {}): Promise<ProvidersListClientResponse> {
   try {
     // Create query parameters
     const params = new URLSearchParams({
@@ -246,23 +282,32 @@ export async function fetchProvidersList({
       throw new Error('Failed to parse response data');
     }
     
-    // Transform providers
+    // Transform API providers to client provider format
     const processedProviders = data.providers.map(transformProvider);
     
-    return {
+    const response: ProvidersListClientResponse = {
       providers: processedProviders,
       total: data.total,
       page: data.page,
       pageSize: data.pageSize
     };
+    
+    return response;
   } catch (error) {
     console.error('Error fetching providers list:', error instanceof Error ? error.message : String(error));
     
     // Return mock data as fallback
-    return {
-      // Mock data implementation
-      // ...
+    const fallback: ProvidersListClientResponse = {
+      providers: [
+        // Mock data implementation
+        // ...
+      ],
+      total: 3,
+      page,
+      pageSize
     };
+    
+    return fallback;
   }
 }
 ```
@@ -278,7 +323,7 @@ export function useProvidersList({
   location = '',
   category = '',
 }: ProviderListParams = {}) {
-  return useQuery<ProvidersListResponse>({
+  return useQuery<ProvidersListClientResponse>({
     queryKey: queryKeys.provider.list({ page, pageSize, name, location, category }),
     queryFn: () => fetchProvidersList({ page, pageSize, name, location, category }),
     keepPreviousData: true, // Keep previous page data while loading next page
@@ -303,8 +348,6 @@ export function ProvidersListClient({
   initialLocation = '',
   initialCategory = '',
 }: ProvidersListClientProps) {
-  const router = useRouter();
-  
   const { 
     data, 
     isLoading, 
@@ -396,7 +439,7 @@ export default async function ListPage({ searchParams }: ListPageProps) {
   
   try {
     // Prefetch data
-    await queryClient.prefetchQuery({
+    await queryClient.prefetchQuery<ProvidersListClientResponse>({
       queryKey: queryKeys.provider.list({ page, pageSize, name, location, category }),
       queryFn: () => fetchProvidersList({ page, pageSize, name, location, category }),
       retry: 1,
@@ -461,5 +504,6 @@ Key takeaways from this refactoring:
 1. Always check API endpoint authentication requirements when migrating to client-side fetching.
 2. Implement robust error handling at multiple levels (API, hooks, components).
 3. Handle NULL values properly to prevent cascading errors.
-4. Use try-catch in server components to prevent page crashes.
-5. Leverage TanStack Query features like `keepPreviousData` for a better user experience.
+4. Ensure type safety by using proper interfaces that match the actual data shapes.
+5. Use try-catch in server components to prevent page crashes.
+6. Leverage TanStack Query features like `keepPreviousData` for a better user experience.

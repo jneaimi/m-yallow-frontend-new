@@ -12,7 +12,6 @@ import {
   PaginationEllipsis
 } from '@/components/ui/pagination';
 import { ResponsiveGrid } from '@/components/ui/responsive';
-import { useRouter } from 'next/navigation';
 
 interface ProvidersListClientProps {
   initialPage: number;
@@ -29,8 +28,6 @@ export function ProvidersListClient({
   initialLocation = '',
   initialCategory = '',
 }: ProvidersListClientProps) {
-  const router = useRouter();
-  
   const { 
     data, 
     isLoading, 
