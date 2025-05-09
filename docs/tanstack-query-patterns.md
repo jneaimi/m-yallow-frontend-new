@@ -205,6 +205,91 @@ export function useInfiniteProviders(categoryId: number) {
 }
 ```
 
+### Data Transformation Hook
+
+When working with data that includes React components or other non-serializable values, use a two-step approach with useMemo:
+
+```typescript
+// hooks/categories/use-categories.ts
+export function useCategories() {
+  const query = useQuery({
+    queryKey: queryKeys.categories.public(),
+    queryFn: async () => {
+      // Store serializable data in cache (string icons instead of React components)
+      return categories.map(category => ({
+        id: String(category.id),
+        name: category.name,
+        icon: category.icon, // Store as string for caching
+        description: category.description
+      }));
+    },
+  });
+  
+  // Transform the cached data with useMemo to create non-serializable values
+  const processedData = useMemo(() => {
+    if (!query.data) return undefined;
+    
+    return query.data.map(item => ({
+      ...item,
+      // Transform string values to React components
+      icon: typeof item.icon === 'string' ? getIconByName(item.icon) : item.icon
+    }));
+  }, [query.data]);
+  
+  // Return the modified query object with transformed data
+  return {
+    ...query,
+    data: processedData
+  };
+}
+```
+
+This pattern ensures:
+1. Only serializable data is stored in the cache
+2. React components and other non-serializable values are created at render time
+3. The creation is optimized with useMemo to avoid unnecessary recalculations
+4. The hook consumers get the fully processed data with proper types
+
+### Expensive Derivation with useMemo
+
+For components that perform expensive calculations based on query data, always use `useMemo` to prevent unnecessary recalculations on re-renders:
+
+```typescript
+// components/providers/categories-modal-tanstack.tsx
+function CategoriesModalTanstack({ isOpen, onClose }) {
+  const { data: categories, isLoading } = useCategories();
+  const categoriesData = categories || [];
+  
+  // Memoize expensive data transformation operations
+  const categoriesByGroup = useMemo(() => {
+    if (isLoading || !categoriesData.length) return {};
+    return categorizeByGroup(categoriesData);
+  }, [isLoading, categoriesData]);
+  
+  // Component rendering...
+}
+```
+
+```typescript
+// components/providers/hybrid-categories-tanstack.tsx
+function HybridCategoriesTanstack({ categories, className }) {
+  // Memoize featured categories calculation
+  const featuredCategories = useMemo(() => {
+    // Logic to filter and select featured categories
+    // ...
+    return featured;
+  }, [categories]);
+  
+  // Component rendering using featuredCategories...
+}
+```
+
+When implementing such optimizations, make sure to:
+1. Always include all dependencies that the calculation depends on
+2. Keep the computation inside the `useMemo` as pure as possible
+3. Use proper TypeScript interfaces instead of `any` to ensure type safety
+4. Consider extracting complex logic into separate utility functions
+
 ## Error Handling Patterns
 
 Follow these patterns when handling errors in your query and mutation functions:

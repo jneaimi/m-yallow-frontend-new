@@ -82,7 +82,7 @@ Current status:
 - ✅ Initial setup and configuration
 - ❌ API client adapters
 - ❌ Authentication integration
-- ❌ Provider categories refactoring
+- ✅ Provider categories refactoring
 - ✅ Recent providers implementation
 - ❌ Provider list implementation
 - ❌ Provider detail implementation
@@ -96,3 +96,9 @@ Current status:
 - [Official TanStack Query Documentation](https://tanstack.com/query/latest/docs/react/overview)
 - [TanStack Query Examples Repository](https://github.com/TanStack/query/tree/main/examples)
 - [Next.js App Router Integration Guide](https://tanstack.com/query/latest/docs/react/guides/advanced-ssr)
+
+## Implementation Examples
+
+The following refactoring examples provide real-world implementation details and patterns:
+
+1. [Browse Categories TanStack Query Refactoring](./refactoring-examples/categories-tanstack-refactoring.md) - Demonstrates handling React components in the cache and transforming data at render time
