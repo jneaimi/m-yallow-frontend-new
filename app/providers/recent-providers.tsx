@@ -1,7 +1,15 @@
-import { ProvidersGrid } from "@/components/providers/providers-grid";
-import { PROVIDER_API, RecentProvider, Provider, transformRecentProvider } from "@/lib/api/providers";
+import { getQueryClient } from '@/lib/query/client';
+import { queryKeys } from '@/lib/query/keys';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { RecentProvidersClient } from '@/components/providers/recent-providers-client';
+import { PROVIDER_API, RecentProvider, transformRecentProvider } from '@/lib/api/providers';
 
-async function getRecentProviders(limit: number = 6): Promise<Provider[]> {
+/**
+ * Fetch recent providers data server-side
+ * @param limit Number of recent providers to fetch
+ * @returns Transformed providers data
+ */
+async function fetchRecentProviders(limit: number = 6) {
   try {
     const res = await fetch(`${PROVIDER_API.RECENT}?limit=${limit}`, { next: { revalidate: 60 } });
     
@@ -17,7 +25,7 @@ async function getRecentProviders(limit: number = 6): Promise<Provider[]> {
   } catch (error) {
     console.error('Error fetching recent providers:', error);
     
-    // Return mock data as fallback
+    // Return mock data as fallback (optional, can be removed in production)
     return [
       {
         id: 1,
@@ -41,7 +49,26 @@ async function getRecentProviders(limit: number = 6): Promise<Provider[]> {
   }
 }
 
-export async function RecentProviders() {
-  const providers = await getRecentProviders();
-  return <ProvidersGrid providers={providers} />;
+interface RecentProvidersProps {
+  limit?: number;
+}
+
+/**
+ * Server component that prefetches recent providers data and hydrates the client component
+ */
+export async function RecentProviders({ limit = 6 }: RecentProvidersProps) {
+  const queryClient = getQueryClient();
+  
+  // Prefetch the recent providers data on the server
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.provider.list({ type: 'recent', limit }),
+    queryFn: () => fetchRecentProviders(limit),
+  });
+  
+  // Hydrate the client with the prefetched data
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <RecentProvidersClient limit={limit} />
+    </HydrationBoundary>
+  );
 }
