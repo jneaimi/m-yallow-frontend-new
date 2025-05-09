@@ -83,6 +83,7 @@ Current status:
 - ❌ API client adapters
 - ❌ Authentication integration
 - ✅ Provider categories refactoring
+- ✅ Provider category detail page (category/[id])
 - ✅ Recent providers implementation
 - ✅ Provider list implementation
 - ❌ Provider detail implementation
@@ -165,6 +166,83 @@ try {
 }
 ```
 
+### 4. Consistent Data Transformation
+
+**Issue**: Runtime errors when different components accessing the same query key expect different data structures.
+
+**Solution**:
+- Ensure all hooks using the same query key transform the data in the same way
+- Standardize on a consistent output format for each query key
+- Use the `queryFn` to transform the API response into the expected format
+
+```typescript
+// Consistent data transformation across hooks
+export function useCategories() {
+  return useQuery({
+    queryKey: queryKeys.categories.public(),
+    queryFn: async () => {
+      const data = await fetchPublicCategories();
+      // Transform API response to standard format
+      return data.categories.map(category => ({
+        id: String(category.id),
+        name: category.name,
+        icon: category.icon
+      }));
+    }
+  });
+}
+
+// Another hook using the same query key must expect the same structure
+export function useCategoryName(categoryId) {
+  const query = useQuery({
+    queryKey: queryKeys.categories.public(),
+    // Same transformation as above to maintain consistency
+    queryFn: async () => {
+      const data = await fetchPublicCategories();
+      return data.categories.map(category => ({
+        id: String(category.id),
+        name: category.name,
+        icon: category.icon
+      }));
+    }
+  });
+  
+  // Now we can safely assume query.data is an array of category objects
+  const categoryName = query.data?.find(cat => String(cat.id) === categoryId)?.name || `Category ${categoryId}`;
+  
+  return { ...query, categoryName };
+}
+```
+
+### 5. Server-Side Prefetching Alignment
+
+**Issue**: Hydration errors or missing data when prefetched server data doesn't match client-side query expectations.
+
+**Solution**:
+- Ensure server-side prefetching uses the exact same transformation as client-side queries
+- Use the same `queryFn` structure in both server and client components
+- Be cautious when accessing prefetched data on the server, as its structure must match the client expectation
+
+```typescript
+// Server-side prefetching in page.tsx
+await queryClient.prefetchQuery({
+  queryKey: queryKeys.categories.public(),
+  queryFn: async () => {
+    const data = await fetchPublicCategories();
+    // Must match the transformation in client hooks
+    return data.categories.map(category => ({
+      id: String(category.id),
+      name: category.name,
+      icon: category.icon
+    }));
+  }
+});
+
+// When accessing the data on the server
+const categories = queryClient.getQueryData(queryKeys.categories.public());
+// Now we know categories is an array of category objects
+```
+
 ## Additional Resources
 
 - [Official TanStack Query Documentation](https://tanstack.com/query/latest/docs/react/overview)
@@ -177,3 +255,4 @@ The following refactoring examples provide real-world implementation details and
 
 1. [Browse Categories TanStack Query Refactoring](./refactoring-examples/categories-tanstack-refactoring.md) - Demonstrates handling React components in the cache and transforming data at render time
 2. [Providers List TanStack Query Refactoring](./refactoring-examples/providers-list-tanstack-refactoring.md) - Shows how to implement pagination, filtering, and handle API authentication requirements
+3. [Category Detail Page TanStack Query Refactoring](./refactoring-examples/category-detail-tanstack-refactoring.md) - Illustrates migrating from server components to a hybrid approach with consistent data transformation

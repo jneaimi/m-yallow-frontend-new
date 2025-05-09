@@ -29,10 +29,10 @@ export function useCategories() {
     queryKey: queryKeys.categories.public(),
     queryFn: async () => {
       try {
-        const { categories } = await fetchPublicCategories();
+        const data = await fetchPublicCategories();
         
         // Return raw categories with icon as string for caching
-        return categories.map(category => ({
+        return data.categories.map(category => ({
           id: String(category.id),
           name: category.name,
           icon: category.icon, // Store as string for caching
