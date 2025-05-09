@@ -13,6 +13,7 @@ import { ProviderProvider } from "@/lib/context/provider-context";
 import { NetworkProvider } from "@/lib/network-context";
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { ClientDebugPanel } from "@/components/dev/client-debug-panel";
+import { ReactQueryProvider } from "@/lib/query/provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,10 +67,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col no-horizontal-overflow`}
       >
         <ClerkProvider>
-          <NetworkProvider>
-            <UserProvider>
-              <ProviderProvider>
-                <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ReactQueryProvider>
+            <NetworkProvider>
+              <UserProvider>
+                <ProviderProvider>
+                  <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                 {/* Screen reader announcements live region */}
                 <LiveRegion id="a11y-announcer" politeness="polite" />
 
@@ -99,9 +101,10 @@ export default function RootLayout({
                 {/* Footer with landmark role */}
                 <Footer />
               </ThemeProvider>
-              </ProviderProvider>
-            </UserProvider>
-          </NetworkProvider>
+                </ProviderProvider>
+              </UserProvider>
+            </NetworkProvider>
+          </ReactQueryProvider>
         </ClerkProvider>
       </body>
     </html>
