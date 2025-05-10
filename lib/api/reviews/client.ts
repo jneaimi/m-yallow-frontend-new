@@ -124,22 +124,75 @@ export function useReviewClient() {
       updated_at: string;
     }
     
-    const response = await apiClient.post<ApiReview>(REVIEW_API.ADD(providerId), data);
-    const apiReview = response.data;
+    // Debug the data being sent to the API
+    console.log('API client sending to server:', { 
+      url: REVIEW_API.ADD(providerId), 
+      providerId, 
+      data 
+    });
     
-    // Transform to camelCase
-    const transformedReview: Review = {
-      id: apiReview.id,
-      providerId: apiReview.provider_id,
-      userId: apiReview.user_id,
-      rating: apiReview.rating,
-      comment: apiReview.comment,
-      status: apiReview.status,
-      createdAt: apiReview.created_at,
-      updatedAt: apiReview.updated_at
+    // Do some validation before sending to the API
+    if (!data.comment || data.comment.trim().length < 10) {
+      throw new Error(`Invalid comment: "${data.comment}". Comment must be at least 10 characters long.`);
+    }
+    
+    if (!data.rating || data.rating < 1 || data.rating > 5) {
+      throw new Error(`Invalid rating: ${data.rating}. Rating must be between 1 and 5.`);
+    }
+    
+    // Try to format the data the way the server might expect it
+    // Let's try a really simple object with just the core fields
+    const formattedData = {
+      rating: data.rating,
+      comment: data.comment
     };
     
-    return transformedReview;
+    try {
+      // First try with the simplified data
+      console.log('Attempting with formatted data:', formattedData);
+      let response;
+      
+      try {
+        response = await apiClient.post<ApiReview>(REVIEW_API.ADD(providerId), formattedData);
+      } catch (initialError) {
+        // If that fails, try with just the original data as a fallback
+        console.log('First attempt failed, trying with original data:', data);
+        response = await apiClient.post<ApiReview>(REVIEW_API.ADD(providerId), data);
+      }
+      
+      console.log('Successful review submission, response:', response.data);
+      const apiReview = response.data;
+    
+      // Transform to camelCase
+      const transformedReview: Review = {
+        id: apiReview.id,
+        providerId: apiReview.provider_id,
+        userId: apiReview.user_id,
+        rating: apiReview.rating,
+        comment: apiReview.comment,
+        status: apiReview.status,
+        createdAt: apiReview.created_at,
+        updatedAt: apiReview.updated_at
+      };
+      
+      return transformedReview;
+    } catch (error: any) {
+      // Detailed error logging
+      console.error('Error in addReview API call:', error);
+      if (error.response) {
+        // The server responded with a status code outside the 2xx range
+        console.error('Server response data:', error.response.data);
+        console.error('Server response status:', error.response.status);
+        console.error('Server response headers:', error.response.headers);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response received:', error.request);
+      } else {
+        // Something happened in setting up the request
+        console.error('Error setting up request:', error.message);
+      }
+      throw error;
+    }
   }, [getApiClient]);
 
   const updateReview = useCallback(async (

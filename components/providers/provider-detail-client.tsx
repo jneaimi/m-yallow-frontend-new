@@ -19,9 +19,10 @@ import { ProviderLocationMap } from "@/components/maps/provider-location-map";
 import { ProviderLocationDetails } from "@/components/providers/provider-location-details";
 import { ProviderSchemaMarkup } from "@/components/providers/provider-schema-markup";
 import { ProviderContactForm } from "@/components/providers/provider-contact-form";
-import { MapPin, Mail, Calendar, Star, ChevronLeft, Loader2 } from "lucide-react";
+import { MapPin, Mail, Calendar, Star, ChevronLeft, Loader2, CheckCircle } from "lucide-react";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useProvider } from "@/hooks/providers/use-provider";
+import { useHasReview } from "@/hooks/reviews";
 import { toast } from "sonner";
 
 interface ProviderDetailClientProps {
@@ -140,6 +141,37 @@ export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) 
   const handleReviewSubmitted = () => {
     toast.success('Your review has been submitted and is awaiting approval.');
   };
+
+  // Component to conditionally render the review form or a message that the user already reviewed
+  function ReviewFormSection({ providerId }: { providerId: number }) {
+    const { hasReviewedProvider, isLoading } = useHasReview(providerId);
+    
+    if (isLoading) {
+      return <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+    }
+    
+    if (hasReviewedProvider) {
+      return (
+        <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-md">
+          <CheckCircle className="h-5 w-5 text-primary" />
+          <div>
+            <p className="font-medium">You've already reviewed this provider</p>
+            <p className="text-sm text-muted-foreground">
+              You can view and manage your reviews in your 
+              <Link href="/dashboard/reviews" className="text-primary hover:underline ml-1">dashboard</Link>.
+            </p>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <ReviewForm 
+        providerId={providerId} 
+        onSuccess={handleReviewSubmitted}
+      />
+    );
+  }
 
   return (
     <div className="py-8 md:py-12">
@@ -276,10 +308,7 @@ export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) 
                   </CardHeader>
                   <CardContent>
                     {isSignedIn ? (
-                      <ReviewForm 
-                        providerId={provider.id} 
-                        onSuccess={handleReviewSubmitted}
-                      />
+                      <ReviewFormSection providerId={provider.id} />
                     ) : (
                       <div className="text-center py-4">
                         <p className="text-muted-foreground mb-4">
