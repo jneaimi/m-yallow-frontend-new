@@ -14,18 +14,28 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from "sonner";
 import { Star, StarIcon } from 'lucide-react';
-import { useReviews } from '@/hooks/use-reviews';
 import { Review } from '@/lib/api/reviews';
+import { useAddReview, useUpdateReview } from '@/hooks/reviews';
 
 const reviewSchema = z.object({
-  rating: z.number().min(1).max(5),
-  comment: z.string().min(10, {
-    message: 'Review must be at least 10 characters',
-  }).max(1000, {
-    message: 'Review must not exceed 1000 characters',
+  rating: z.number().min(1, {
+    message: 'Please select a rating between 1 and 5 stars'
+  }).max(5, {
+    message: 'Please select a rating between 1 and 5 stars'
+  }).refine((val) => val > 0, {
+    message: 'Please select a rating'
   }),
+  comment: z.string()
+    .min(10, {
+      message: 'Review must be at least 10 characters long'
+    })
+    .max(1000, {
+      message: 'Review must not exceed 1000 characters'
+    })
+    .refine((val) => val.trim().length >= 10, {
+      message: 'Review must contain at least 10 non-whitespace characters'
+    }),
 });
 
 type ReviewFormValues = z.infer<typeof reviewSchema>;
@@ -45,8 +55,10 @@ export function ReviewForm({
   onSuccess,
   initialData,
 }: ReviewFormProps) {
-  const [isEditing, setIsEditing] = useState(!!initialData?.id);
-  const { addReview, updateReview } = useReviews({ providerId });
+  const [isEditing] = useState(!!initialData?.id);
+  
+  const addReviewMutation = useAddReview();
+  const updateReviewMutation = useUpdateReview();
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewSchema),
@@ -54,38 +66,100 @@ export function ReviewForm({
       rating: initialData?.rating || 0,
       comment: initialData?.comment || '',
     },
+    mode: 'onChange', // Validate on field change for better UX
   });
 
   const onSubmit = async (data: ReviewFormValues) => {
     try {
-      let review;
-
+      // Debug form data before submission
+      console.log('Form data being submitted:', { providerId, data, isEditing });
+      
+      // Verify that form is actually valid
+      const isValid = await form.trigger();
+      console.log('Form validation result:', { 
+        isValid, 
+        errors: form.formState.errors,
+        values: form.getValues()
+      });
+      
+      if (!isValid) {
+        console.error('Form validation failed:', form.formState.errors);
+        return; // Don't proceed if validation fails
+      }
+      
+      // Double-check comment length (including after trimming)
+      const trimmedComment = data.comment.trim();
+      if (trimmedComment.length < 10) {
+        form.setError('comment', { 
+          type: 'manual', 
+          message: 'Review must contain at least 10 non-whitespace characters'
+        });
+        return;
+      }
+      
       if (isEditing && initialData?.id) {
-        review = await updateReview(initialData.id, {
-          rating: data.rating,
-          comment: data.comment,
-        });
-        toast.success('Your review has been updated and submitted for approval.');
+        updateReviewMutation.mutate(
+          {
+            reviewId: initialData.id,
+            data: {
+              rating: data.rating,
+              comment: data.comment,
+            },
+          },
+          {
+            onSuccess: (review) => {
+              if (onSuccess) {
+                onSuccess(review);
+              }
+            },
+            onError: (error) => {
+              console.error('Error updating review:', error);
+            }
+          }
+        );
       } else {
-        review = await addReview({
-          rating: data.rating,
-          comment: data.comment,
-        });
-        toast.success('Your review has been submitted for approval.');
-      }
-
-      if (review && onSuccess) {
-        onSuccess(review);
-      }
-
-      if (!isEditing) {
-        form.reset({ rating: 0, comment: '' });
+        // Validate again here for extra safety
+        if (!data.rating || data.rating < 1 || data.rating > 5) {
+          console.error('Invalid rating:', data.rating);
+          return;
+        }
+        
+        if (!data.comment || data.comment.trim().length < 10) {
+          console.error('Invalid comment:', data.comment);
+          return;
+        }
+        
+        // Add review - mutate with the providerId and review data
+        addReviewMutation.mutate(
+          {
+            providerId,
+            rating: data.rating,
+            comment: data.comment
+          },
+          {
+            onSuccess: (review) => {
+              console.log('Review added successfully:', review);
+              if (onSuccess) {
+                onSuccess(review);
+              }
+              
+              if (!isEditing) {
+                form.reset({ rating: 0, comment: '' });
+              }
+            },
+            onError: (error) => {
+              console.error('Error adding review:', error);
+            }
+          }
+        );
       }
     } catch (error) {
       console.error('Failed to submit review:', error);
-      toast.error('Failed to submit your review. Please try again.');
     }
   };
+
+  const isPending = addReviewMutation.isPending || addReviewMutation.isLoading || updateReviewMutation.isPending || updateReviewMutation.isLoading;
+  const error = addReviewMutation.error ?? updateReviewMutation.error;
 
   return (
     <Form {...form}>
@@ -127,18 +201,29 @@ export function ReviewForm({
               <FormLabel>Review</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Share your experience with this provider..."
+                  placeholder="Share your experience with this provider... (minimum 10 characters)"
                   className="min-h-[120px]"
                   {...field}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="flex justify-between">
+                <FormMessage />
+                <div className={`text-xs ${field.value?.length < 10 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {field.value?.length || 0}/10 min
+                </div>
+              </div>
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting && (
+        {error && (
+          <div className="text-destructive text-sm">
+            {error instanceof Error ? error.message : 'An error occurred. Please try again.'}
+          </div>
+        )}
+
+        <Button type="submit" disabled={isPending}>
+          {isPending && (
             <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent"></span>
           )}
           {isEditing ? 'Update Review' : 'Submit Review'}

@@ -20,6 +20,44 @@ export interface Review {
   updatedAt: string;
 }
 
+// Type definitions for API responses
+interface ApiReview {
+  id: number;
+  provider_id: number;
+  user_id: string;
+  rating: number;
+  comment: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  updated_at: string;
+}
+
+type ProviderReviewsResponse = {
+  reviews: ApiReview[];
+  total: number;
+};
+
+type UserReviewsResponse = {
+  reviews: ApiReview[];
+  total: number;
+};
+
+/**
+ * Transform API reviews from snake_case to camelCase
+ */
+function transformApiReviews(apiReviews: ApiReview[]): Review[] {
+  return apiReviews.map(review => ({
+    id: review.id,
+    providerId: review.provider_id,
+    userId: review.user_id,
+    rating: review.rating,
+    comment: review.comment,
+    status: review.status,
+    createdAt: review.created_at,
+    updatedAt: review.updated_at
+  }));
+}
+
 /**
  * Get all approved reviews for a specific provider
  * @param providerId The ID of the provider
@@ -27,8 +65,10 @@ export interface Review {
  */
 export async function getProviderReviews(providerId: number): Promise<Review[]> {
   const apiClient = await createServerApiClient();
-  const response = await apiClient.get(REVIEW_API.LIST_BY_PROVIDER(providerId));
-  return response.data;
+  const response = await apiClient.get<ProviderReviewsResponse>(REVIEW_API.LIST_BY_PROVIDER(providerId));
+  
+  // Transform the response to match client expectations
+  return transformApiReviews(response.data.reviews || []);
 }
 
 /**
@@ -37,8 +77,10 @@ export async function getProviderReviews(providerId: number): Promise<Review[]> 
  */
 export async function getUserReviews(): Promise<Review[]> {
   const apiClient = await createServerApiClient();
-  const response = await apiClient.get(REVIEW_API.LIST_USER_REVIEWS);
-  return response.data;
+  const response = await apiClient.get<UserReviewsResponse>(REVIEW_API.LIST_USER_REVIEWS);
+  
+  // Transform the response to match client expectations
+  return transformApiReviews(response.data.reviews || []);
 }
 
 /**
@@ -52,8 +94,19 @@ export async function addReview(
   data: { rating: number; comment: string }
 ): Promise<Review> {
   const apiClient = await createServerApiClient();
-  const response = await apiClient.post(REVIEW_API.ADD(providerId), data);
-  return response.data;
+  const response = await apiClient.post<ApiReview>(REVIEW_API.ADD(providerId), data);
+  
+  // Transform the response to match client expectations
+  return {
+    id: response.data.id,
+    providerId: response.data.provider_id,
+    userId: response.data.user_id,
+    rating: response.data.rating,
+    comment: response.data.comment,
+    status: response.data.status,
+    createdAt: response.data.created_at,
+    updatedAt: response.data.updated_at
+  };
 }
 
 /**
@@ -67,8 +120,19 @@ export async function updateReview(
   data: { rating: number; comment: string }
 ): Promise<Review> {
   const apiClient = await createServerApiClient();
-  const response = await apiClient.put(REVIEW_API.UPDATE(reviewId), data);
-  return response.data;
+  const response = await apiClient.put<ApiReview>(REVIEW_API.UPDATE(reviewId), data);
+  
+  // Transform the response to match client expectations
+  return {
+    id: response.data.id,
+    providerId: response.data.provider_id,
+    userId: response.data.user_id,
+    rating: response.data.rating,
+    comment: response.data.comment,
+    status: response.data.status,
+    createdAt: response.data.created_at,
+    updatedAt: response.data.updated_at
+  };
 }
 
 /**

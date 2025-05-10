@@ -80,17 +80,17 @@ The TanStack Query implementation is being rolled out incrementally across the p
 
 Current status:
 - ✅ Initial setup and configuration
-- ❌ API client adapters
-- ❌ Authentication integration
+- ✅ API client adapters
+- ✅ Authentication integration
 - ✅ Provider categories refactoring
 - ✅ Provider category detail page (category/[id])
 - ✅ Recent providers implementation
 - ✅ Provider list implementation
 - ✅ Provider detail implementation
-- ❌ Provider reviews implementation
+- ✅ Provider reviews implementation
 - ✅ Bookmarks implementation
 - ✅ Search implementation
-- ❌ Dashboard features implementation
+- ✅ Dashboard features implementation
 
 ## Common Issues and Solutions
 
@@ -396,33 +396,67 @@ useBookmarkedProviders.getKey = () => ['bookmarkedProviders'];
 queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
 ```
 
-### 11. Targeted Refetching Instead of Page Reloads
+### 12. React Query Version Compatibility
 
-**Issue**: Using `window.location.reload()` to refresh data breaks the SPA experience and clears cache.
+**Issue**: API differences between React Query v4 and v5, particularly around loading state properties.
 
 **Solution**:
-- Use the `refetch` function returned by `useQuery` hooks
-- Use `invalidateQueries` for targeted cache invalidation
-- This preserves app state and provides a better user experience
+- Use a compatibility approach that works with both versions when writing mutation components
+- React Query v5 uses `isPending` while v4 uses `isLoading` for mutations
+- Check both properties to ensure compatibility across versions or environments
 
 ```typescript
-// Bad - reloads the entire page, losing all state
-<Button onClick={() => window.location.reload()}>Retry</Button>
+// Version-specific approach (breaks in different versions)
+// Will work in v5 but break in v4:
+const isPending = mutation.isPending;
+// Will work in v4 but might be deprecated in future v5 updates:
+const isLoading = mutation.isLoading;
 
-// Good - only refetches the necessary data
-const { refetch } = useBookmarkedProviders();
-<Button onClick={refetch}>Retry</Button>
+// Version-compatible approach (works in both v4 and v5)
+const isProcessing = mutation.isPending || mutation.isLoading;
 
-// Better - invalidate and then refetch
-const queryClient = useQueryClient();
-const { refetch } = useBookmarkedProviders();
+// For error handling, prefer nullish coalescing over logical OR
+// This properly handles cases where one error might be falsy but valid
+const error = primaryMutation.error ?? fallbackMutation.error;
 
-const handleRetry = () => {
-  queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
-  refetch();
-};
-<Button onClick={handleRetry}>Retry</Button>
+// In components:
+<Button 
+  type="submit" 
+  disabled={isProcessing}
+>
+  {isProcessing ? 'Processing...' : 'Submit'}
+</Button>
 ```
+
+By using this compatibility pattern, your code will be resilient to version differences, which is particularly important when:
+- Different parts of the application may be running different versions during gradual upgrades
+- Working with third-party libraries that might use their own version of React Query
+- Preparing for future version upgrades
+
+### 13. Next.js App Router and Dynamic Route Parameters
+
+**Issue**: Using dynamic route parameters like `searchParams` directly without awaiting them can cause errors in Next.js App Router.
+
+**Solution**:
+- Always await dynamic route parameters before using them
+- Use `Promise.resolve()` to handle both promise and non-promise values
+
+```typescript
+export default async function SomePage({ searchParams }: PageProps) {
+  // Ensure searchParams is fully resolved before accessing properties
+  const resolvedParams = await Promise.resolve(searchParams);
+  
+  // Now safely access properties
+  const someValue = resolvedParams.someValue;
+  
+  // Continue with the component logic using the resolved values
+}
+```
+
+This approach works correctly in all Next.js versions:
+- In older versions, `searchParams` is already a resolved object, so `Promise.resolve()` returns it immediately
+- In newer versions, `searchParams` might be a promise that needs to be awaited
+- Using `Promise.resolve()` handles both cases safely
 
 
 

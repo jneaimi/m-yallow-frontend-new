@@ -1,13 +1,11 @@
 'use client';
 
 import React from 'react';
-import { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Review } from '@/lib/api/reviews';
-import { useReviews } from '@/hooks/use-reviews';
 import { ReviewCard } from './review-card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { useProviderReviews, useUserReviews } from '@/hooks/reviews';
 
 interface ReviewListProps {
   providerId: number;
@@ -17,40 +15,22 @@ interface ReviewListProps {
 export function ReviewList({ providerId, userReviews = false }: ReviewListProps) {
   console.log('ReviewList rendered with props:', { providerId, userReviews });
   
-  // When showing user reviews, we always want to fetch from the user reviews endpoint
-  const { reviews: allUserReviews, isLoading, error, fetchReviews } = useReviews({ 
-    providerId: userReviews ? undefined : providerId,
-    fetchUserReviews: userReviews
+  // Use the appropriate query hook based on whether we're showing user reviews or provider reviews
+  const providerReviewsQuery = useProviderReviews(providerId, {
+    enabled: !userReviews, // Only fetch provider reviews when not showing user reviews
   });
   
-  // Filter reviews by providerId if we're showing user reviews but want to filter for a specific provider
-  const reviews = React.useMemo(() => {
-    if (userReviews && providerId > 0 && Array.isArray(allUserReviews)) {
-      console.log(`Filtering user reviews for provider ${providerId}`);
-      return allUserReviews.filter(review => review.providerId === providerId);
-    }
-    return allUserReviews;
-  }, [allUserReviews, userReviews, providerId]);
-  
-  console.log('ReviewList - useReviews hook result:', { 
-    totalReviews: allUserReviews?.length || 0,
-    filteredReviews: reviews?.length || 0,
-    isLoading, 
-    hasError: !!error 
+  const userReviewsQuery = useUserReviews(providerId, {
+    enabled: userReviews, // Only fetch user reviews when showing user reviews
   });
+  
+  // Determine which query to use
+  const { data: reviews, isLoading, error } = userReviews 
+    ? userReviewsQuery 
+    : providerReviewsQuery;
   
   const { user } = useUser();
   const userId = user?.id;
-  
-  console.log('Current user ID:', userId);
-
-  const handleUpdated = () => {
-    fetchReviews();
-  };
-
-  const handleDeleted = () => {
-    fetchReviews();
-  };
 
   if (isLoading) {
     return (
@@ -61,7 +41,18 @@ export function ReviewList({ providerId, userReviews = false }: ReviewListProps)
     );
   }
 
-  if (reviews.length === 0) {
+  if (error) {
+    return (
+      <div className="text-center py-8 text-destructive">
+        <p>Error loading reviews. Please try again later.</p>
+        <pre className="mt-2 text-xs text-muted-foreground">
+          {(error as Error).message}
+        </pre>
+      </div>
+    );
+  }
+
+  if (!reviews || reviews.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground mb-4">
@@ -71,7 +62,7 @@ export function ReviewList({ providerId, userReviews = false }: ReviewListProps)
         </p>
         {userReviews && (
           <Button asChild>
-            <a href="/providers">Browse Providers to Review</a>
+            <a href="/search">Browse Providers to Review</a>
           </Button>
         )}
       </div>
@@ -80,16 +71,14 @@ export function ReviewList({ providerId, userReviews = false }: ReviewListProps)
 
   return (
     <div className="space-y-4">
-      {Array.isArray(reviews) ? reviews.map((review) => (
+      {reviews.map((review) => (
         <ReviewCard
           key={review.id}
           review={review}
           providerId={review.providerId}
           isOwner={userId === review.userId}
-          onUpdated={handleUpdated}
-          onDeleted={handleDeleted}
         />
-      )) : null} {/* Handle case where reviews might not be an array, though useReviews should ensure it is */}
+      ))}
     </div>
   );
 }

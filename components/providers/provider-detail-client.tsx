@@ -19,14 +19,52 @@ import { ProviderLocationMap } from "@/components/maps/provider-location-map";
 import { ProviderLocationDetails } from "@/components/providers/provider-location-details";
 import { ProviderSchemaMarkup } from "@/components/providers/provider-schema-markup";
 import { ProviderContactForm } from "@/components/providers/provider-contact-form";
-import { MapPin, Mail, Calendar, Star, ChevronLeft, Loader2 } from "lucide-react";
+import { MapPin, Mail, Calendar, Star, ChevronLeft, Loader2, CheckCircle } from "lucide-react";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useProvider } from "@/hooks/providers/use-provider";
+import { useHasReview } from "@/hooks/reviews";
 import { toast } from "sonner";
 
 interface ProviderDetailClientProps {
   providerId: string;
 }
+
+// Extracted ReviewFormSection as a standalone component with memoization
+const ReviewFormSection = React.memo(function ReviewFormSection({ 
+  providerId, 
+  onSuccess 
+}: { 
+  providerId: number; 
+  onSuccess: () => void;
+}) {
+  const { hasReviewedProvider, isLoading } = useHasReview(providerId);
+  
+  if (isLoading) {
+    return <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  }
+  
+  if (hasReviewedProvider) {
+    return (
+      <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-md">
+        <CheckCircle className="h-5 w-5 text-primary" />
+        <div>
+          <p className="font-medium">You&apos;ve already reviewed this provider</p>
+          <p className="text-sm text-muted-foreground">
+            You can view and manage your reviews in your 
+            <Link href="/dashboard/reviews" className="text-primary hover:underline ml-1">dashboard</Link>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <ReviewForm 
+      providerId={providerId} 
+      onSuccess={onSuccess}
+    />
+  );
+});
 
 export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) {
   const { data: provider, isLoading, error } = useProvider(providerId);
@@ -276,9 +314,9 @@ export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) 
                   </CardHeader>
                   <CardContent>
                     {isSignedIn ? (
-                      <ReviewForm 
-                        providerId={provider.id} 
-                        onSuccess={handleReviewSubmitted}
+                      <ReviewFormSection 
+                        providerId={provider.id}
+                        onSuccess={handleReviewSubmitted} 
                       />
                     ) : (
                       <div className="text-center py-4">

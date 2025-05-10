@@ -8,54 +8,43 @@ import { Button } from '@/components/ui/button';
 import { Star, StarIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ReviewForm } from './review-form';
-import { useReviews } from '@/hooks/use-reviews';
+import { useDeleteReview } from '@/hooks/reviews';
 
 interface ReviewCardProps {
   review: Review;
   providerId: number;
   isOwner: boolean;
-  onUpdated?: () => void;
-  onDeleted?: () => void;
 }
 
 export function ReviewCard({
   review,
   providerId,
   isOwner,
-  onUpdated,
-  onDeleted,
 }: ReviewCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { deleteReview } = useReviews({ providerId });
+  
+  const deleteReviewMutation = useDeleteReview();
 
   const handleDeleteReview = async () => {
     if (!review.id) return;
     
-    const success = await deleteReview(review.id);
-    if (success && onDeleted) {
-      onDeleted();
-    }
-    setIsDeleteDialogOpen(false);
+    deleteReviewMutation.mutate({
+      reviewId: review.id,
+      providerId
+    }, {
+      onSuccess: () => {
+        setIsDeleteDialogOpen(false);
+      }
+    });
   };
 
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
-    if (onUpdated) {
-      onUpdated();
-    }
   };
 
   // Format the date with improved error handling
   let timeAgo = 'Recent'; // Friendlier default value
-  
-  // Debug logging to help trace date-related issues
-  console.log('Review object:', {
-    id: review.id,
-    createdAt: review.createdAt,
-    type: typeof review.createdAt,
-    hasValue: Boolean(review.createdAt)
-  });
   
   if (review.createdAt) {
     try {
@@ -64,17 +53,10 @@ export function ReviewCard({
       // Validate the parsed date
       if (!isNaN(reviewDate.getTime())) { 
         timeAgo = formatDistanceToNow(reviewDate, { addSuffix: true });
-        console.log('Successfully formatted date:', timeAgo);
-      } else {
-        console.warn('Invalid date format received:', review.createdAt);
-        console.warn('Parsed date is invalid:', reviewDate);
       }
     } catch (error) {
       console.error('Error parsing date string:', review.createdAt);
-      console.error('Error details:', error);
     }
-  } else {
-    console.warn('Missing createdAt value for review:', review.id);
   }
 
   return (
@@ -161,8 +143,9 @@ export function ReviewCard({
                 <Button 
                   variant="destructive" 
                   onClick={handleDeleteReview}
+                  disabled={deleteReviewMutation.isPending}
                 >
-                  Delete
+                  {deleteReviewMutation.isPending ? 'Deleting...' : 'Delete'}
                 </Button>
               </DialogFooter>
             </DialogContent>
