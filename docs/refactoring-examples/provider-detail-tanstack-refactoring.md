@@ -12,9 +12,9 @@ This document outlines the refactoring of the Provider Detail page (`/providers/
 2. **Client Component**: `/components/providers/provider-detail-client.tsx` (replaced)
 3. **Page Component**: `/app/providers/[id]/page.tsx` (replaced)
 
-Original files have been backed up with `.bak` extensions:
-- `/components/providers/provider-detail-client.tsx.bak`
-- `/app/providers/[id]/page.tsx.bak`
+Original files have been preserved and are now stored in the `/docs/refactoring-examples/backup-files/` directory:
+- `/docs/refactoring-examples/backup-files/provider-detail-client-original.tsx`
+- `/docs/refactoring-examples/backup-files/provider-detail-page-original.tsx`
 
 ## Refactoring Approach
 

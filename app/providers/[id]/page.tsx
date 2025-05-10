@@ -11,9 +11,19 @@ interface ProviderPageProps {
 
 // Generate metadata for this page
 export async function generateMetadata({ params }: ProviderPageProps) {
+  const providerId = Number(params.id);
+  
+  // Early return for invalid IDs
+  if (Number.isNaN(providerId)) {
+    return {
+      title: 'Invalid Provider ID',
+      description: 'The provider ID provided is not valid'
+    };
+  }
+  
   try {
     // Fetch the provider data directly for metadata generation
-    const provider = await fetchProvider(params.id);
+    const provider = await fetchProvider(providerId);
     
     if (!provider) {
       return {
@@ -42,16 +52,22 @@ export async function generateMetadata({ params }: ProviderPageProps) {
 
 export default async function ProviderPage({ params }: ProviderPageProps) {
   const queryClient = getQueryClient();
+  const providerId = Number(params.id);
+
+  // Fast-fail on bad ids (e.g. "abc")
+  if (Number.isNaN(providerId)) {
+    notFound();
+  }
   
   try {
     // Prefetch the provider data on the server
     await queryClient.prefetchQuery({
-      queryKey: queryKeys.provider.detail(parseInt(params.id)),
-      queryFn: () => fetchProvider(params.id),
+      queryKey: queryKeys.provider.detail(providerId),
+      queryFn: () => fetchProvider(providerId),
     });
     
     // Check if the provider exists to handle notFound()
-    const provider = queryClient.getQueryData(queryKeys.provider.detail(parseInt(params.id)));
+    const provider = queryClient.getQueryData(queryKeys.provider.detail(providerId));
     
     if (!provider) {
       notFound();
