@@ -86,7 +86,7 @@ Current status:
 - ✅ Provider category detail page (category/[id])
 - ✅ Recent providers implementation
 - ✅ Provider list implementation
-- ❌ Provider detail implementation
+- ✅ Provider detail implementation
 - ❌ Provider reviews implementation
 - ❌ Bookmarks implementation
 - ❌ Search implementation
@@ -384,3 +384,4 @@ The following refactoring examples provide real-world implementation details and
 1. [Browse Categories TanStack Query Refactoring](./refactoring-examples/categories-tanstack-refactoring.md) - Demonstrates handling React components in the cache and transforming data at render time
 2. [Providers List TanStack Query Refactoring](./refactoring-examples/providers-list-tanstack-refactoring.md) - Shows how to implement pagination, filtering, and handle API authentication requirements
 3. [Category Detail Page TanStack Query Refactoring](./refactoring-examples/category-detail-tanstack-refactoring.md) - Illustrates migrating from server components to a hybrid approach with consistent data transformation
+4. [Provider Detail Page TanStack Query Refactoring](./refactoring-examples/provider-detail-tanstack-refactoring.md) - Shows how to implement server-side prefetching with client-side state management for a complex detail page
