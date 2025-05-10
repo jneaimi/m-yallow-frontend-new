@@ -6,12 +6,23 @@ import { render, screen } from '@testing-library/react';
 import { BookmarkedProviders } from '../bookmarked-providers';
 import { useBookmarkedProviders, useToggleBookmark } from '@/hooks/bookmarks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { BookmarkedProvider } from '@/lib/api/bookmarks/transforms';
 
 // Mock the hooks
 jest.mock('@/hooks/bookmarks', () => ({
   useBookmarkedProviders: jest.fn(),
   useToggleBookmark: jest.fn()
 }));
+
+// Define the interface for the BookmarkedProvidersList props
+interface BookmarkedProvidersListProps {
+  providers: BookmarkedProvider[];
+  isLoading: boolean;
+  error: Error | null;
+  onRetry: () => void;
+  onRemoveBookmark: (providerId: number) => Promise<void>;
+  isRemoving: (providerId: number) => boolean;
+}
 
 // Mock the BookmarkedProvidersList component
 jest.mock('../bookmarked-providers-list', () => ({
@@ -22,7 +33,7 @@ jest.mock('../bookmarked-providers-list', () => ({
     onRetry, 
     onRemoveBookmark, 
     isRemoving 
-  }: any) => (
+  }: BookmarkedProvidersListProps) => (
     <div data-testid="bookmarked-providers-list">
       <div data-testid="props-snapshot">
         {JSON.stringify({
@@ -120,5 +131,26 @@ describe('BookmarkedProviders', () => {
     const propsSnapshot = JSON.parse(screen.getByTestId('props-snapshot').textContent || '{}');
     
     expect(propsSnapshot.hasError).toBe(true);
+  });
+
+  it('handles empty state correctly', () => {
+    (useBookmarkedProviders as jest.Mock).mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      refetch: jest.fn()
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BookmarkedProviders />
+      </QueryClientProvider>
+    );
+
+    const propsSnapshot = JSON.parse(screen.getByTestId('props-snapshot').textContent || '{}');
+    
+    expect(propsSnapshot.providersLength).toBe(0);
+    expect(propsSnapshot.isLoading).toBe(false);
+    expect(propsSnapshot.hasError).toBe(false);
   });
 });

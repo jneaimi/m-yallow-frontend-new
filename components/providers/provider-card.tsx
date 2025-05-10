@@ -12,7 +12,7 @@ interface ProviderCardProps {
   name: string;
   heroImageUrl: string;
   aboutSnippet?: string;
-  categories?: any[];
+  categories?: Array<string | { id?: number; name: string }>;
   city?: string;
   state?: string;
   onRemoveBookmark?: (providerId: number) => Promise<void>;
@@ -86,9 +86,13 @@ export function ProviderCard({
           {aboutSnippet || 'No description available'}
         </p>
         <div className="flex flex-wrap gap-1 mt-2">
-          {categories?.slice(0, 3).map(category => (
-            <Badge key={category.id} variant="outline" className="text-xs">
-              {category.name}
+          {categories?.slice(0, 3).map((category, index) => (
+            <Badge 
+              key={typeof category === 'object' ? category.id || index : index} 
+              variant="outline" 
+              className="text-xs"
+            >
+              {typeof category === 'object' ? category.name : category}
             </Badge>
           ))}
           {(categories?.length || 0) > 3 && (

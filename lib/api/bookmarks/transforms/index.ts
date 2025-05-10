@@ -25,7 +25,9 @@ export function transformBookmarkedProvider(provider: ApiProvider): BookmarkedPr
     name: provider.name || 'Unnamed Provider',
     heroImageUrl: provider.hero_image_url || `/images/placeholder-provider.jpg`,
     aboutSnippet: provider.about || '',
-    categories: provider.categories || [],
+    categories: provider.categories
+      ?.map(cat => cat.name || 'Uncategorized')
+      .filter(Boolean) ?? [],
     city: provider.city || '',
     state: provider.state || '',
   };
