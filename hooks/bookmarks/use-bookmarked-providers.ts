@@ -4,14 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useBookmarksList } from './use-bookmarks-list';
 import { createApiClient } from '@/lib/api-client';
 import { PROVIDER_API, ApiProvider } from '@/lib/api/providers';
-
-// Query key getter for external access
-const BOOKMARKED_PROVIDERS_KEY = 'bookmarkedProviders';
+import { queryKeys } from '@/lib/query/keys';
 
 // Extend the function type to include the static method
 interface UseBookmarkedProvidersHook {
   (): ReturnType<typeof useQuery>;
-  getKey: () => [string];
+  getKey: () => readonly [string, string];
 }
 
 /**
@@ -21,11 +19,11 @@ interface UseBookmarkedProvidersHook {
 export const useBookmarkedProviders: UseBookmarkedProvidersHook = function useBookmarkedProviders() {
   const { data: bookmarkIds = [], isLoading: isLoadingBookmarks } = useBookmarksList();
   
-  // Static method to get the query key
-  useBookmarkedProviders.getKey = () => [BOOKMARKED_PROVIDERS_KEY];
+  // Static method to get the query key using the central queryKeys object
+  useBookmarkedProviders.getKey = () => queryKeys.bookmarks.detail();
   
   return useQuery({
-    queryKey: [BOOKMARKED_PROVIDERS_KEY, [...bookmarkIds].sort()],
+    queryKey: [...queryKeys.bookmarks.detail(), [...bookmarkIds].sort()],
     queryFn: async () => {
       if (bookmarkIds.length === 0) {
         return [];
