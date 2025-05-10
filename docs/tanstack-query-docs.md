@@ -88,7 +88,7 @@ Current status:
 - ✅ Provider list implementation
 - ✅ Provider detail implementation
 - ❌ Provider reviews implementation
-- ❌ Bookmarks implementation
+- ✅ Bookmarks implementation
 - ✅ Search implementation
 - ❌ Dashboard features implementation
 
@@ -371,6 +371,59 @@ export function useCategories() {
 
 By sharing the query function, you avoid duplicating transformation logic and ensure that server-side prefetching produces exactly the same data structure that client components expect.
 
+### 10. Stable Query Keys for Arrays
+
+**Issue**: Unnecessary refetches when passing arrays or objects directly in query keys due to identity comparison.
+
+**Solution**:
+- Sort arrays or use stable serialization for array query keys
+- Use constants and helper functions for query keys
+- Expose static methods on hooks to access query keys
+- This prevents unnecessary network requests and UI flickering
+
+```typescript
+// Bad - array identity changes on each render, causing unnecessary refetches
+queryKey: ['bookmarkedProviders', bookmarkIds],
+
+// Good - array contents are sorted for stable identity
+queryKey: ['bookmarkedProviders', [...bookmarkIds].sort()],
+
+// Alternative - use an object if order matters
+queryKey: ['bookmarkedProviders', { ids: bookmarkIds }],
+
+// Best - use a static accessor method for external invalidation
+useBookmarkedProviders.getKey = () => ['bookmarkedProviders'];
+queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
+```
+
+### 11. Targeted Refetching Instead of Page Reloads
+
+**Issue**: Using `window.location.reload()` to refresh data breaks the SPA experience and clears cache.
+
+**Solution**:
+- Use the `refetch` function returned by `useQuery` hooks
+- Use `invalidateQueries` for targeted cache invalidation
+- This preserves app state and provides a better user experience
+
+```typescript
+// Bad - reloads the entire page, losing all state
+<Button onClick={() => window.location.reload()}>Retry</Button>
+
+// Good - only refetches the necessary data
+const { refetch } = useBookmarkedProviders();
+<Button onClick={refetch}>Retry</Button>
+
+// Better - invalidate and then refetch
+const queryClient = useQueryClient();
+const { refetch } = useBookmarkedProviders();
+
+const handleRetry = () => {
+  queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
+  refetch();
+};
+<Button onClick={handleRetry}>Retry</Button>
+```
+
 
 
 - [Official TanStack Query Documentation](https://tanstack.com/query/latest/docs/react/overview)
@@ -386,3 +439,4 @@ The following refactoring examples provide real-world implementation details and
 3. [Category Detail Page TanStack Query Refactoring](./refactoring-examples/category-detail-tanstack-refactoring.md) - Illustrates migrating from server components to a hybrid approach with consistent data transformation
 4. [Provider Detail Page TanStack Query Refactoring](./refactoring-examples/provider-detail-tanstack-refactoring.md) - Shows how to implement server-side prefetching with client-side state management for a complex detail page
 5. [Search TanStack Query Refactoring](./refactoring-examples/search-tanstack-refactoring.md) - Demonstrates refactoring search functionality with robust error handling and response format normalization
+6. [Bookmarks TanStack Query Refactoring](./refactoring-examples/bookmarks-tanstack-refactoring.md) - Shows how to implement optimistic updates for bookmarks with a backward-compatible API

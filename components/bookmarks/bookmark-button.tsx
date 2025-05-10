@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Bookmark, BookmarkX } from 'lucide-react';
-import { toast } from "sonner";
-import { useBookmarks } from '@/hooks/use-bookmarks';
+import { useBookmarksList, useToggleBookmark } from '@/hooks/bookmarks';
 
 interface BookmarkButtonProps {
   providerId: number;
@@ -17,31 +15,20 @@ export function BookmarkButton({
   initialIsBookmarked,
   onToggle,
 }: BookmarkButtonProps) {
-  const [isPending, setIsPending] = useState(false);
-  const { isBookmarked, toggleBookmark, bookmarks } = useBookmarks();
+  const { data: bookmarks = [] } = useBookmarksList();
+  const toggleBookmarkMutation = useToggleBookmark();
   
-  // Track the bookmark state locally, initialized with the correct value
-  const [isCurrentlyBookmarked, setIsCurrentlyBookmarked] = useState(
-    initialIsBookmarked !== undefined ? initialIsBookmarked : isBookmarked(providerId)
-  );
-  
-  // Update local state when the bookmarks array changes
-  useEffect(() => {
-    setIsCurrentlyBookmarked(isBookmarked(providerId));
-  }, [bookmarks, isBookmarked, providerId]);
+  // Use the bookmarks data or fall back to initialIsBookmarked if provided
+  const isBookmarked = initialIsBookmarked !== undefined
+    ? initialIsBookmarked
+    : bookmarks.includes(providerId);
 
   const handleToggle = async () => {
-    setIsPending(true);
     try {
-      await toggleBookmark(providerId);
-      // Update the local state immediately for better user feedback
-      const newState = !isCurrentlyBookmarked;
-      setIsCurrentlyBookmarked(newState);
-      onToggle?.(newState);
+      await toggleBookmarkMutation.mutateAsync(providerId);
+      onToggle?.(!isBookmarked);
     } catch (error) {
-      toast.error('Failed to update bookmark status');
-    } finally {
-      setIsPending(false);
+      // Error is handled in the mutation hook
     }
   };
 
@@ -50,15 +37,15 @@ export function BookmarkButton({
       variant="outline"
       size="sm"
       onClick={handleToggle}
-      disabled={isPending}
-      aria-label={isCurrentlyBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+      disabled={toggleBookmarkMutation.isPending}
+      aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
     >
-      {isPending ? (
+      {toggleBookmarkMutation.isPending ? (
         <div className="flex items-center">
           <span className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
-          {isCurrentlyBookmarked ? 'Removing...' : 'Saving...'}
+          {isBookmarked ? 'Removing...' : 'Saving...'}
         </div>
-      ) : isCurrentlyBookmarked ? (
+      ) : isBookmarked ? (
         <>
           <BookmarkX className="w-4 h-4 mr-2" />
           Unsave
