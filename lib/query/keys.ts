@@ -20,6 +20,11 @@ export const queryKeys = {
     search: ({ query, categoryId, limit }: { query?: string; categoryId?: string; limit?: number }) => 
       [...queryKeys.provider.all, 'search', query || '', categoryId || '', limit || 20] as const,
     byCategory: (categoryId: string) => [...queryKeys.provider.all, 'byCategory', categoryId] as const,
+    // Dashboard-related queries
+    me: () => [...queryKeys.provider.all, 'me'] as const,
+    metrics: () => [...queryKeys.provider.all, 'metrics'] as const,
+    inquiries: (limit?: number) => [...queryKeys.provider.all, 'inquiries', limit] as const,
+    services: () => [...queryKeys.provider.all, 'services'] as const,
   },
   
   // Bookmark-related queries
