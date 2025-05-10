@@ -9,8 +9,11 @@ interface UserReviewsPageProps {
 }
 
 export default async function UserReviewsPage({ searchParams }: UserReviewsPageProps) {
+  // Need to await searchParams since it could be a promise in Next.js App Router
+  const resolvedSearchParams = await Promise.resolve(searchParams);
+  
   // Extract and parse providerId from searchParams
-  const providerIdParam = searchParams?.providerId;
+  const providerIdParam = resolvedSearchParams?.providerId;
   const providerId = typeof providerIdParam === 'string' ? parseInt(providerIdParam, 10) : NaN;
   const isValidProviderId = !isNaN(providerId) && providerId > 0;
   
