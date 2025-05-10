@@ -11,7 +11,9 @@ interface ProviderPageProps {
 
 // Generate metadata for this page
 export async function generateMetadata({ params }: ProviderPageProps) {
-  const providerId = Number(params.id);
+  // Await params to access properties safely
+  const id = (await params).id;
+  const providerId = Number(id);
   
   // Early return for invalid IDs
   if (Number.isNaN(providerId)) {
@@ -51,8 +53,10 @@ export async function generateMetadata({ params }: ProviderPageProps) {
 }
 
 export default async function ProviderPage({ params }: ProviderPageProps) {
+  // Await params to access properties safely
+  const id = (await params).id;
   const queryClient = getQueryClient();
-  const providerId = Number(params.id);
+  const providerId = Number(id);
 
   // Fast-fail on bad ids (e.g. "abc")
   if (Number.isNaN(providerId)) {
@@ -76,7 +80,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
     // Render the client component with the hydrated query client
     return (
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <ProviderDetailClient providerId={params.id} />
+        <ProviderDetailClient providerId={id} />
       </HydrationBoundary>
     );
   } catch (error) {
