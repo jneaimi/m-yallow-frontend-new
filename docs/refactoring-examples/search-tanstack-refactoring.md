@@ -9,6 +9,9 @@ This document details the process of refactoring the search functionality in the
 3. [Implementation Details](#implementation-details)
 4. [Challenges and Solutions](#challenges-and-solutions)
 5. [Performance Improvements](#performance-improvements)
+6. [Integration with Existing Components](#integration-with-existing-components)
+7. [Future Improvements](#future-improvements)
+8. [Conclusion](#conclusion)
 
 ## Original Implementation
 

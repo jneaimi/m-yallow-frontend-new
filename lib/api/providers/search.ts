@@ -92,12 +92,10 @@ export async function searchProviders({
         provider.categories?.some(cat => String(cat.id) === categoryId)
       );
       
-      if (filteredProviders.length > 0) {
-        return {
-          providers: filteredProviders,
-          total: filteredProviders.length
-        };
-      }
+      return {
+        providers: filteredProviders,
+        total: filteredProviders.length
+      };
     }
     
     return {
