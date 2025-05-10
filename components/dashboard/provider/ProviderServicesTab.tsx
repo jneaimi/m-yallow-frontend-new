@@ -78,7 +78,7 @@ export function ProviderServicesTab() {
                   <div className="flex items-center justify-between mt-3">
                     <span className="font-medium">${service.price}</span>
                     <Button size="sm" variant="outline" asChild>
-                      <Link href={`/dashboard/provider/services/${service.id || index}/edit`}>
+                      <Link href={`/dashboard/provider/services/${index}/edit`}>
                         Edit
                       </Link>
                     </Button>
