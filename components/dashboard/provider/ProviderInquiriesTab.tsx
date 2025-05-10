@@ -5,11 +5,30 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useProviderInquiries } from "@/hooks/providers/use-provider-inquiries";
 import type { Inquiry } from "@/hooks/providers/use-provider-inquiries";
 
 export function ProviderInquiriesTab() {
   const { data: inquiries, isLoading } = useProviderInquiries();
+  const router = useRouter();
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  
+  // Function to handle responding to an inquiry
+  const handleRespond = async (id: string) => {
+    setProcessingId(id);
+    try {
+      // Navigate to the response page
+      router.push(`/dashboard/provider/inquiries/${id}/respond`);
+    } catch (error) {
+      console.error("Error navigating to response page:", error);
+    } finally {
+      // In a real implementation, you might not need this if navigation takes the user away
+      // But it's good practice in case there's an error
+      setProcessingId(null);
+    }
+  };
   
   // Format date function
   const formatDate = (dateString: string) => {
@@ -91,7 +110,15 @@ export function ProviderInquiriesTab() {
                     <span className="text-xs text-muted-foreground">
                       {formatDate(inquiry.date)}
                     </span>
-                    <Button size="sm" variant="outline">Respond</Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleRespond(inquiry.id)}
+                      disabled={processingId === inquiry.id}
+                      aria-label="Respond to inquiry"
+                    >
+                      {processingId === inquiry.id ? "Processing..." : "Respond"}
+                    </Button>
                   </div>
                 </div>
               </div>

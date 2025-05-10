@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useProviderServices } from "@/hooks/providers/use-provider-services";
+import { useProviderServices, Service } from "@/hooks/providers/use-provider-services";
 import { useProviderMe } from "@/hooks/providers/use-provider-me";
 
 export function ProviderServicesTab() {
@@ -50,7 +50,7 @@ export function ProviderServicesTab() {
         <div className="space-y-4">
           {/* Use real services data if available */}
           {services && services.length > 0 ? (
-            services.map((service) => (
+            services.map((service: Service) => (
               <div key={service.id} className="border rounded-md p-4">
                 <h4 className="font-medium">{service.name}</h4>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -64,9 +64,8 @@ export function ProviderServicesTab() {
             ))
           ) : (
             // Fall back to provider services if available
-            providerData?.services && providerData.services.length > 0 ? (
-              // @ts-ignore: Assuming services is an array on providerData
-              providerData.services.map((service: any, index: number) => (
+            providerData?.services && Array.isArray(providerData.services) && providerData.services.length > 0 ? (
+              providerData.services.map((service: {name: string; description: string; price: number}, index: number) => (
                 <div key={index} className="border rounded-md p-4">
                   <h4 className="font-medium">{service.name}</h4>
                   <p className="text-sm text-muted-foreground mt-1">

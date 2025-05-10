@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query/keys';
 import { useApiClient } from '@/lib/api-client/client';
 import { useAuth } from '@clerk/nextjs';
+import { useProviderMe } from './use-provider-me';
 
 export interface Inquiry {
   id: string;
@@ -15,24 +16,37 @@ export interface Inquiry {
 
 /**
  * Hook to fetch the current provider's inquiries
+ * First retrieves the provider ID, then fetches inquiries using the numeric ID
  * @param limit Number of inquiries to fetch (default: 5)
  * @returns Query result containing provider inquiries, loading state, and errors
  */
 export function useProviderInquiries(limit: number = 5) {
   const getApiClient = useApiClient();
   const { isSignedIn } = useAuth();
+  const { data: providerData, isLoading: isProviderLoading } = useProviderMe();
 
   return useQuery<Inquiry[]>({
-    queryKey: queryKeys.provider.inquiries(limit),
+    queryKey: providerData?.id 
+      ? queryKeys.provider.inquiriesById(providerData.id, limit)
+      : queryKeys.provider.inquiries(limit),
     queryFn: async () => {
       if (!isSignedIn) {
         throw new Error('User is not signed in');
       }
       
+      if (!providerData || !providerData.id) {
+        throw new Error('Provider profile not found');
+      }
+      
       try {
         const apiClient = await getApiClient();
-        const response = await apiClient.get(`/providers/me/inquiries?limit=${limit}`);
-        return response.data.inquiries;
+        const response = await apiClient.get(`/providers/${providerData.id}/inquiries?limit=${limit}`);
+        
+        // Validate response structure
+        if (response.data && Array.isArray(response.data.inquiries)) {
+          return response.data.inquiries;
+        }
+        throw new Error('Invalid response format from API');
       } catch (err) {
         // If the API doesn't support inquiries yet, return mock data
         console.warn('Error fetching provider inquiries, using sample data:', err);
@@ -46,6 +60,6 @@ export function useProviderInquiries(limit: number = 5) {
         ];
       }
     },
-    enabled: !!isSignedIn,
+    enabled: !!isSignedIn && !isProviderLoading && !!providerData?.id,
   });
 }

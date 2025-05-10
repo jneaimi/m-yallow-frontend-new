@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Settings, Edit, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ReactNode } from "react";
@@ -32,15 +32,15 @@ export function DashboardHeader({
   actions,
   children,
 }: DashboardHeaderProps) {
-  // Import icons dynamically
+  // Map icon names to components
   const getIconComponent = (iconName?: string) => {
     if (!iconName) return null;
     
     // You can add more icons as needed
     const icons: Record<string, ReactNode> = {
-      Settings: <span className="mr-2 h-4 w-4">⚙️</span>,
-      Edit: <span className="mr-2 h-4 w-4">✏️</span>,
-      Plus: <span className="mr-2 h-4 w-4">➕</span>,
+      Settings: <Settings className="mr-2 h-4 w-4" />,
+      Edit: <Edit className="mr-2 h-4 w-4" />,
+      Plus: <Plus className="mr-2 h-4 w-4" />,
     };
     
     return icons[iconName] || null;

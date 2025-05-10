@@ -23,8 +23,11 @@ export const queryKeys = {
     // Dashboard-related queries
     me: () => [...queryKeys.provider.all, 'me'] as const,
     metrics: () => [...queryKeys.provider.all, 'metrics'] as const,
+    metricsById: (providerId: number) => [...queryKeys.provider.all, 'metrics', providerId] as const,
     inquiries: (limit?: number) => [...queryKeys.provider.all, 'inquiries', limit] as const,
+    inquiriesById: (providerId: number, limit?: number) => [...queryKeys.provider.all, 'inquiries', providerId, limit] as const,
     services: () => [...queryKeys.provider.all, 'services'] as const,
+    servicesById: (providerId: number) => [...queryKeys.provider.all, 'services', providerId] as const,
   },
   
   // Bookmark-related queries
@@ -37,6 +40,7 @@ export const queryKeys = {
   reviews: {
     all: ['reviews'] as const,
     byProvider: (providerId: number) => [...queryKeys.reviews.all, 'byProvider', providerId] as const,
+    byCurrentProvider: (limit: number) => [...queryKeys.reviews.all, 'byProvider', 'current', limit] as const,
     byUser: (userId: string) => [...queryKeys.reviews.all, 'byUser', userId] as const,
   },
   

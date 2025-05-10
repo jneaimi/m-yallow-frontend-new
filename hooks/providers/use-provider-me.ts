@@ -23,9 +23,11 @@ export function useProviderMe() {
         const apiClient = await getApiClient();
         const response = await apiClient.get('/providers/me');
         return response.data;
-      } catch (err: any) {
+      } catch (err: unknown) {
         // 404 means the user is not a provider yet, which is not an error
-        if (err.response && err.response.status === 404) {
+        if (err && typeof err === 'object' && 'response' in err && 
+            err.response && typeof err.response === 'object' && 
+            'status' in err.response && err.response.status === 404) {
           return null;
         }
         throw err;

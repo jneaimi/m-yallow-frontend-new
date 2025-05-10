@@ -28,7 +28,20 @@ export function ProviderMetricsSection() {
     );
   }
   
-  return <MetricsCards metrics={metrics!} />;
+  // Safely handle potentially undefined metrics data
+  if (!metrics) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-muted-foreground">No metrics data available</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  return <MetricsCards metrics={metrics} />;
 }
 
 function MetricsCards({ metrics }: { metrics: ProviderMetrics }) {

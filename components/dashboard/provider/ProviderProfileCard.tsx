@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useProviderMe } from "@/hooks/providers/use-provider-me";
 
 export function ProviderProfileCard() {
-  const { data: providerData, isLoading } = useProviderMe();
+  const { data: providerData, isLoading, error } = useProviderMe();
   
   if (isLoading) {
     return (
@@ -27,6 +27,18 @@ export function ProviderProfileCard() {
                 <div className="h-8 bg-muted rounded"></div>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-destructive">
+            <p>Error loading profile data. Please try again later.</p>
           </div>
         </CardContent>
       </Card>
