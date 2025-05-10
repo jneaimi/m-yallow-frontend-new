@@ -16,13 +16,13 @@ export function ReviewList({ providerId, userReviews = false }: ReviewListProps)
   console.log('ReviewList rendered with props:', { providerId, userReviews });
   
   // Use the appropriate query hook based on whether we're showing user reviews or provider reviews
-  const providerReviewsQuery = useProviderReviews(
-    userReviews ? 0 : providerId // Only use for provider reviews
-  );
+  const providerReviewsQuery = useProviderReviews(providerId, {
+    enabled: !userReviews, // Only fetch provider reviews when not showing user reviews
+  });
   
-  const userReviewsQuery = useUserReviews(
-    userReviews ? providerId : 0 // Only use for user reviews, with optional filtering
-  );
+  const userReviewsQuery = useUserReviews(providerId, {
+    enabled: userReviews, // Only fetch user reviews when showing user reviews
+  });
   
   // Determine which query to use
   const { data: reviews, isLoading, error } = userReviews 

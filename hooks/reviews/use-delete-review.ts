@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query/keys';
 import { useReviewClient } from '@/lib/api/reviews/client';
+import { parseApiError } from '@/lib/api/error-utils';
 import { toast } from "sonner";
 import { Review } from '@/lib/api/reviews';
 
@@ -38,9 +39,9 @@ export function useDeleteReview() {
       
       toast.success('Your review has been deleted');
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('Failed to delete review:', error);
-      toast.error('Failed to delete review. Please try again.');
+      toast.error(parseApiError(error));
     },
   });
 }

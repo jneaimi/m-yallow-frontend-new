@@ -29,6 +29,43 @@ interface ProviderDetailClientProps {
   providerId: string;
 }
 
+// Extracted ReviewFormSection as a standalone component with memoization
+const ReviewFormSection = React.memo(function ReviewFormSection({ 
+  providerId, 
+  onSuccess 
+}: { 
+  providerId: number; 
+  onSuccess: () => void;
+}) {
+  const { hasReviewedProvider, isLoading } = useHasReview(providerId);
+  
+  if (isLoading) {
+    return <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  }
+  
+  if (hasReviewedProvider) {
+    return (
+      <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-md">
+        <CheckCircle className="h-5 w-5 text-primary" />
+        <div>
+          <p className="font-medium">You&apos;ve already reviewed this provider</p>
+          <p className="text-sm text-muted-foreground">
+            You can view and manage your reviews in your 
+            <Link href="/dashboard/reviews" className="text-primary hover:underline ml-1">dashboard</Link>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <ReviewForm 
+      providerId={providerId} 
+      onSuccess={onSuccess}
+    />
+  );
+});
+
 export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) {
   const { data: provider, isLoading, error } = useProvider(providerId);
   const [imgError, setImgError] = React.useState(false);
@@ -141,37 +178,6 @@ export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) 
   const handleReviewSubmitted = () => {
     toast.success('Your review has been submitted and is awaiting approval.');
   };
-
-  // Component to conditionally render the review form or a message that the user already reviewed
-  function ReviewFormSection({ providerId }: { providerId: number }) {
-    const { hasReviewedProvider, isLoading } = useHasReview(providerId);
-    
-    if (isLoading) {
-      return <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
-    }
-    
-    if (hasReviewedProvider) {
-      return (
-        <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-md">
-          <CheckCircle className="h-5 w-5 text-primary" />
-          <div>
-            <p className="font-medium">You've already reviewed this provider</p>
-            <p className="text-sm text-muted-foreground">
-              You can view and manage your reviews in your 
-              <Link href="/dashboard/reviews" className="text-primary hover:underline ml-1">dashboard</Link>.
-            </p>
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <ReviewForm 
-        providerId={providerId} 
-        onSuccess={handleReviewSubmitted}
-      />
-    );
-  }
 
   return (
     <div className="py-8 md:py-12">
@@ -308,7 +314,10 @@ export function ProviderDetailClient({ providerId }: ProviderDetailClientProps) 
                   </CardHeader>
                   <CardContent>
                     {isSignedIn ? (
-                      <ReviewFormSection providerId={provider.id} />
+                      <ReviewFormSection 
+                        providerId={provider.id}
+                        onSuccess={handleReviewSubmitted} 
+                      />
                     ) : (
                       <div className="text-center py-4">
                         <p className="text-muted-foreground mb-4">

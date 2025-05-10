@@ -1,7 +1,15 @@
 'use client';
 
 import { useApiClient } from '@/lib/api-client/client';
-import { useCallback, useMemo } from 'react'; // Import hooks
+import { useCallback, useMemo } from 'react';
+import { AxiosError } from 'axios';
+
+/**
+ * Type guard to check if an error is an Axios error
+ */
+function isAxiosError(err: unknown): err is AxiosError {
+  return Boolean(err && typeof err === 'object' && 'isAxiosError' in err && (err as AxiosError).isAxiosError === true);
+}
 
 export const REVIEW_API = {
   LIST_BY_PROVIDER: (providerId: number) => `/providers/${providerId}/reviews`,
@@ -100,7 +108,7 @@ export function useReviewClient() {
       
       console.log('Transformed user reviews:', transformedReviews);
       return transformedReviews;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching user reviews:', error);
       return [];
     }
@@ -153,11 +161,17 @@ export function useReviewClient() {
       let response;
       
       try {
-        response = await apiClient.post<ApiReview>(REVIEW_API.ADD(providerId), formattedData);
-      } catch (initialError) {
+        response = await apiClient.post<ApiReview>(
+          REVIEW_API.ADD(providerId),
+          formattedData
+        );
+      } catch (err: unknown) {
         // If that fails, try with just the original data as a fallback
-        console.log('First attempt failed, trying with original data:', data);
-        response = await apiClient.post<ApiReview>(REVIEW_API.ADD(providerId), data);
+        console.log('First attempt failed, retrying with original payload:', err);
+        response = await apiClient.post<ApiReview>(
+          REVIEW_API.ADD(providerId),
+          data
+        );
       }
       
       console.log('Successful review submission, response:', response.data);
@@ -176,21 +190,24 @@ export function useReviewClient() {
       };
       
       return transformedReview;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Detailed error logging
       console.error('Error in addReview API call:', error);
-      if (error.response) {
+      
+      if (isAxiosError(error) && error.response) {
         // The server responded with a status code outside the 2xx range
         console.error('Server response data:', error.response.data);
         console.error('Server response status:', error.response.status);
         console.error('Server response headers:', error.response.headers);
-      } else if (error.request) {
+      } else if (isAxiosError(error) && error.request) {
         // The request was made but no response was received
         console.error('No response received:', error.request);
       } else {
-        // Something happened in setting up the request
-        console.error('Error setting up request:', error.message);
+        // Something happened in setting up the request or it's not an Axios error
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error setting up request:', errorMessage);
       }
+      
       throw error;
     }
   }, [getApiClient]);

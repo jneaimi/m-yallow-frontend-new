@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query/keys';
 import { useReviewClient } from '@/lib/api/reviews/client';
+import { parseApiError } from '@/lib/api/error-utils';
 import { toast } from "sonner";
 
 export function useUpdateReview() {
@@ -32,9 +33,9 @@ export function useUpdateReview() {
       
       toast.success('Your review has been updated and submitted for approval');
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('Failed to update review:', error);
-      toast.error('Failed to update review. Please try again.');
+      toast.error(parseApiError(error));
     },
   });
 }

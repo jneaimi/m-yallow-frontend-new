@@ -158,8 +158,8 @@ export function ReviewForm({
     }
   };
 
-  const isPending = addReviewMutation.isPending || updateReviewMutation.isPending;
-  const error = addReviewMutation.error || updateReviewMutation.error;
+  const isPending = addReviewMutation.isPending || addReviewMutation.isLoading || updateReviewMutation.isPending || updateReviewMutation.isLoading;
+  const error = addReviewMutation.error ?? updateReviewMutation.error;
 
   return (
     <Form {...form}>
