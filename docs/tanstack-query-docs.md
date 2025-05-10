@@ -80,17 +80,17 @@ The TanStack Query implementation is being rolled out incrementally across the p
 
 Current status:
 - ✅ Initial setup and configuration
-- ❌ API client adapters
-- ❌ Authentication integration
+- ✅ API client adapters
+- ✅ Authentication integration
 - ✅ Provider categories refactoring
 - ✅ Provider category detail page (category/[id])
 - ✅ Recent providers implementation
 - ✅ Provider list implementation
 - ✅ Provider detail implementation
-- ❌ Provider reviews implementation
+- ✅ Provider reviews implementation
 - ✅ Bookmarks implementation
 - ✅ Search implementation
-- ❌ Dashboard features implementation
+- ✅ Dashboard features implementation
 
 ## Common Issues and Solutions
 
