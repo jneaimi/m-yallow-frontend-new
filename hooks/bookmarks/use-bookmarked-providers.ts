@@ -5,15 +5,27 @@ import { useBookmarksList } from './use-bookmarks-list';
 import { createApiClient } from '@/lib/api-client';
 import { PROVIDER_API, ApiProvider } from '@/lib/api/providers';
 
+// Query key getter for external access
+const BOOKMARKED_PROVIDERS_KEY = 'bookmarkedProviders';
+
+// Extend the function type to include the static method
+interface UseBookmarkedProvidersHook {
+  (): ReturnType<typeof useQuery>;
+  getKey: () => [string];
+}
+
 /**
  * Hook to fetch detailed provider information for bookmarked provider IDs
  * Depends on useBookmarksList for the IDs
  */
-export function useBookmarkedProviders() {
+export const useBookmarkedProviders: UseBookmarkedProvidersHook = function useBookmarkedProviders() {
   const { data: bookmarkIds = [], isLoading: isLoadingBookmarks } = useBookmarksList();
   
+  // Static method to get the query key
+  useBookmarkedProviders.getKey = () => [BOOKMARKED_PROVIDERS_KEY];
+  
   return useQuery({
-    queryKey: ['bookmarkedProviders', bookmarkIds],
+    queryKey: [BOOKMARKED_PROVIDERS_KEY, [...bookmarkIds].sort()],
     queryFn: async () => {
       if (bookmarkIds.length === 0) {
         return [];

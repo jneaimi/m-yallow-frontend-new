@@ -8,8 +8,9 @@ This document details the refactoring of the bookmark functionality to use TanSt
 2. [Key Changes](#key-changes)
 3. [New Hooks](#new-hooks)
 4. [Component Updates](#component-updates)
-5. [Migration Path](#migration-path)
-6. [Testing Considerations](#testing-considerations)
+5. [Best Practices](#best-practices)
+6. [Migration Path](#migration-path)
+7. [Testing Considerations](#testing-considerations)
 
 ## Overview
 
@@ -95,6 +96,92 @@ const { bookmarks, isLoading, error, toggleBookmark, isBookmarked } = useBookmar
 - Removed manual data fetching and state management
 - Improved loading and error handling
 - More reactive to changes in bookmark status
+
+## Best Practices
+
+### Stable Query Keys
+
+Always ensure that query keys remain stable across renders to prevent unnecessary refetches:
+
+```typescript
+// Bad - array identity changes on each render
+queryKey: ['bookmarkedProviders', bookmarkIds],
+
+// Good - array contents are sorted for stable identity
+queryKey: ['bookmarkedProviders', [...bookmarkIds].sort()],
+
+// Alternative - use an object if order matters
+queryKey: ['bookmarkedProviders', { ids: bookmarkIds }],
+```
+
+### Typed Query Keys
+
+Use constants and helper functions for query keys:
+
+```typescript
+// Define a constant
+const BOOKMARKED_PROVIDERS_KEY = 'bookmarkedProviders';
+
+// Use the constant in your query
+queryKey: [BOOKMARKED_PROVIDERS_KEY, [...bookmarkIds].sort()],
+```
+
+### Query Key Accessors
+
+Expose static methods to access query keys from outside the hook:
+
+```typescript
+// Add a static method to the hook
+useBookmarkedProviders.getKey = () => [BOOKMARKED_PROVIDERS_KEY];
+
+// In components that need to invalidate the query
+queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
+```
+
+### Targeted Refetching
+
+Use proper query invalidation and refetching instead of brute-force page reloads:
+
+```typescript
+// Bad - reloads the entire page
+window.location.reload();
+
+// Good - refetches only the necessary data
+const handleRetry = () => {
+  queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
+  refetch();
+};
+```
+
+### Optimistic Updates
+
+Always implement optimistic updates for mutations to provide a better user experience:
+
+```typescript
+onMutate: async (providerId) => {
+  // Cancel any outgoing refetches to avoid overwriting optimistic update
+  await queryClient.cancelQueries({ queryKey: queryKeys.bookmarks.list() });
+  
+  // Snapshot the previous value
+  const previousBookmarks = queryClient.getQueryData(queryKeys.bookmarks.list());
+  
+  // Optimistically update to the new value
+  queryClient.setQueryData(
+    queryKeys.bookmarks.list(),
+    (old: number[] = []) => {
+      const isCurrentlyBookmarked = old.includes(providerId);
+      if (isCurrentlyBookmarked) {
+        return old.filter(id => id !== providerId);
+      } else {
+        return [...old, providerId];
+      }
+    }
+  );
+  
+  // Return context object to use in onError
+  return { previousBookmarks };
+},
+```
 
 ## Migration Path
 

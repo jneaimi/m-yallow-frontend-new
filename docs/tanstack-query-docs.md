@@ -371,6 +371,59 @@ export function useCategories() {
 
 By sharing the query function, you avoid duplicating transformation logic and ensure that server-side prefetching produces exactly the same data structure that client components expect.
 
+### 10. Stable Query Keys for Arrays
+
+**Issue**: Unnecessary refetches when passing arrays or objects directly in query keys due to identity comparison.
+
+**Solution**:
+- Sort arrays or use stable serialization for array query keys
+- Use constants and helper functions for query keys
+- Expose static methods on hooks to access query keys
+- This prevents unnecessary network requests and UI flickering
+
+```typescript
+// Bad - array identity changes on each render, causing unnecessary refetches
+queryKey: ['bookmarkedProviders', bookmarkIds],
+
+// Good - array contents are sorted for stable identity
+queryKey: ['bookmarkedProviders', [...bookmarkIds].sort()],
+
+// Alternative - use an object if order matters
+queryKey: ['bookmarkedProviders', { ids: bookmarkIds }],
+
+// Best - use a static accessor method for external invalidation
+useBookmarkedProviders.getKey = () => ['bookmarkedProviders'];
+queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
+```
+
+### 11. Targeted Refetching Instead of Page Reloads
+
+**Issue**: Using `window.location.reload()` to refresh data breaks the SPA experience and clears cache.
+
+**Solution**:
+- Use the `refetch` function returned by `useQuery` hooks
+- Use `invalidateQueries` for targeted cache invalidation
+- This preserves app state and provides a better user experience
+
+```typescript
+// Bad - reloads the entire page, losing all state
+<Button onClick={() => window.location.reload()}>Retry</Button>
+
+// Good - only refetches the necessary data
+const { refetch } = useBookmarkedProviders();
+<Button onClick={refetch}>Retry</Button>
+
+// Better - invalidate and then refetch
+const queryClient = useQueryClient();
+const { refetch } = useBookmarkedProviders();
+
+const handleRetry = () => {
+  queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
+  refetch();
+};
+<Button onClick={handleRetry}>Retry</Button>
+```
+
 
 
 - [Official TanStack Query Documentation](https://tanstack.com/query/latest/docs/react/overview)

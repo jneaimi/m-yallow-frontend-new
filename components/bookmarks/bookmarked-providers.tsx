@@ -6,10 +6,19 @@ import { BookmarkX, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { ProviderCard } from '@/components/providers/provider-card';
 import { useBookmarkedProviders, useToggleBookmark } from '@/hooks/bookmarks';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function BookmarkedProviders() {
-  const { data: providers = [], isLoading, error } = useBookmarkedProviders();
+  const queryClient = useQueryClient();
+  const { data: providers = [], isLoading, error, refetch } = useBookmarkedProviders();
   const toggleBookmarkMutation = useToggleBookmark();
+  
+  // Function to handle retrying the query when it fails
+  const handleRetry = () => {
+    // Invalidate and refetch only the bookmarked providers query
+    queryClient.invalidateQueries({ queryKey: useBookmarkedProviders.getKey() });
+    refetch();
+  };
 
   // Function to handle removing a bookmark directly from this view
   const handleRemoveBookmark = async (providerId: number) => {
@@ -38,7 +47,7 @@ export function BookmarkedProviders() {
           <p className="text-muted-foreground mb-6 max-w-md">
             We couldn't load your saved providers. Please try again.
           </p>
-          <Button onClick={() => window.location.reload()}>
+          <Button onClick={handleRetry}>
             Retry
           </Button>
         </CardContent>
