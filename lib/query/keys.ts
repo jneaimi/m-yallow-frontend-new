@@ -34,6 +34,7 @@ export const queryKeys = {
   bookmarks: {
     all: ['bookmarks'] as const,
     list: () => [...queryKeys.bookmarks.all, 'list'] as const,
+    detail: () => [...queryKeys.bookmarks.all, 'detail'] as const,
   },
   
   // Review-related queries

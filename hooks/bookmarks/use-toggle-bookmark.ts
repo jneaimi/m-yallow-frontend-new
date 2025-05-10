@@ -31,12 +31,24 @@ export function useToggleBookmark() {
       
       const isCurrentlyBookmarked = bookmarks.includes(providerId);
       
-      if (isCurrentlyBookmarked) {
-        await bookmarkClient.removeBookmark(providerId);
-        return { added: false, providerId };
-      } else {
-        await bookmarkClient.addBookmark(providerId);
-        return { added: true, providerId };
+      try {
+        if (isCurrentlyBookmarked) {
+          await bookmarkClient.removeBookmark(providerId);
+          return { added: false, providerId };
+        } else {
+          await bookmarkClient.addBookmark(providerId);
+          return { added: true, providerId };
+        }
+      } catch (error) {
+        console.error('Bookmark operation failed:', error);
+        
+        // Provide more specific error messages based on the operation type
+        const message = isCurrentlyBookmarked 
+          ? 'Failed to remove bookmark. Please try again.'
+          : 'Failed to add bookmark. Please try again.';
+          
+        toast.error(message);
+        throw error;
       }
     },
     onMutate: async (providerId) => {
@@ -75,7 +87,9 @@ export function useToggleBookmark() {
     onError: (error, providerId, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       queryClient.setQueryData(queryKeys.bookmarks.list(), context?.previousBookmarks);
-      toast.error('Failed to update bookmark. Please try again.');
+      
+      // Error message is now handled in the mutationFn to provide more specific feedback
+      // This prevents duplicate error messages
     },
     onSettled: () => {
       // Always refetch after error or success to get a consistent state
